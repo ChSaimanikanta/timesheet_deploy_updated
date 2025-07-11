@@ -1,0 +1,95 @@
+.adminUser-ProjectForm {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #f5ffd7;
+}
+.createAdmin-ProjectForm {
+  width: 80%; /* Set max width to 80% */
+}
+.btn-ProjectForm {
+  margin: 5px;
+  border-radius: 8px;
+  padding: 8px;
+  background-color: #28a745;
+  color: #fff;
+}
+.createAdmin-title-ProjectForm {
+  letter-spacing: 2px;
+  font-weight: 800;
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: larger;
+}
+
+.createAdmin-body-ProjectForm {
+  background-color: #fff;
+  width: 100%;
+  margin: 20px auto;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+}
+
+.form-control-1-ProjectForm {
+  width: 100%;
+  padding: 8px;
+  margin-top: 5px;
+  margin-bottom: 5px;
+  box-sizing: border-box;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}
+
+.form-control-ProjectForm {
+  width: 100%;
+  padding: 8px;
+  box-sizing: border-box;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.team-member-container-ProjectForm,
+.supervisor-container-ProjectForm {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.submit-button-ProjectForm,
+.cancel-button-ProjectForm,
+.add-member-ProjectForm,
+.remove-member-ProjectForm,
+.add-supervisor-ProjectForm,
+.remove-supervisor-ProjectForm {
+  width: 100px; /* Adjust the width as needed */
+}
+
+.add-member-ProjectForm,
+.remove-member-ProjectForm,
+.add-supervisor-ProjectForm,
+.remove-supervisor-ProjectForm {
+  font-size: 1rem; /* Adjust the font size as needed */
+}
+
+.submit-button-ProjectForm {
+  background-color: #28a745; /* Green color for success */
+  color: #fff; /* White text color */
+  justify-content: center;
+  border-radius: 8px;
+}
+
+.cancel-button-ProjectForm {
+  background-color: #aa0b00; /* Blue color for info */
+  color: #fff; /* White text color */
+  border-radius: 8px;
+}
+
+.error-message-ProjectForm {
+  color: #aa0b00;
+}
+.createAdmin-button-ProjectForm {
+  width: auto;
+  /* flex-wrap:wrap; */
+}

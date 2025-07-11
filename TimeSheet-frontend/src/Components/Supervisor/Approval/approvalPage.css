@@ -1,0 +1,36 @@
+
+
+.spr-approval-header th{
+
+    background-color: #1C2FBA !important;
+    color: #fff !important;
+    
+}
+
+
+.spr-approval-title{
+    font-weight: bold;
+}
+
+/* reject reason */
+.fixed-size-textarea {
+    resize: none;
+    width: 100%; /* Set width to 100% of container */
+    height: 100%; /* Set height to 100% of container */
+    max-height: 80px;
+  }
+
+  .textarea-container{
+    overflow: hidden;
+  }
+
+
+
+
+
+
+
+
+
+
+

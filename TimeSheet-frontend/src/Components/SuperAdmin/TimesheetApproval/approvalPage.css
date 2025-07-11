@@ -1,0 +1,43 @@
+.spr-approval-header th {
+  background-color: #1c2fba !important;
+  color: #fff !important;
+}
+.spr-approval-header{
+  margin-bottom: 15px;
+}
+
+.spr-approval-title {
+  font-weight: bold;
+}
+
+/* reject reason */
+.fixed-size-textarea {
+  resize: none;
+  width: 100%; /* Set width to 100% of container */
+  height: 100%; /* Set height to 100% of container */
+  max-height: 80px;
+}
+
+.textarea-container {
+  overflow: hidden;
+}
+
+/* .signInSymbol{
+    border: 2px solid white;
+    border-radius: 50%;
+    padding: 5px 10px;
+    display: inline-block;
+    margin-left: 5px;
+
+    
+} */
+
+  .met {
+    overflow-x:auto;
+    display: block;
+    white-space: nowrap;
+    width: 100%;
+  }
+  
+
+

@@ -1,0 +1,59 @@
+/* Extra small devices (phones, less than 576px) */
+@media only screen and (max-width: 575px) {
+    .employee-form {
+      padding: 10px;
+      font-size: 12px;
+    }
+  
+    .sprAdmin-createAdmin-title {
+      font-size: 18px;
+    }
+  }
+  
+  /* Small devices (phones, 576px and up) */
+  @media only screen and (min-width: 576px) and (max-width: 768px) {
+    .employee-form {
+      padding: 15px;
+      font-size: 14px;
+    }
+  
+    .sprAdmin-createAdmin-title {
+      font-size: 20px;
+    }
+  }
+  
+  /* Medium devices (tablets, 768px and up) */
+  @media only screen and (min-width: 768px) and (max-width: 992px) {
+    .employee-form {
+      padding: 20px;
+      font-size: 16px;
+    }
+  
+    .sprAdmin-createAdmin-title {
+      font-size: 22px;
+    }
+  }
+  
+  /* Large devices (desktops, 992px and up) */
+  @media only screen and (min-width: 992px) and (max-width: 1200px) {
+    .employee-form {
+      padding: 25px;
+      font-size: 18px;
+    }
+  
+    .sprAdmin-createAdmin-title {
+      font-size: 24px;
+    }
+  }
+  
+  /* Extra large devices (desktops, 1200px and up) */
+  @media only screen and (min-width: 1200px) {
+    .employee-form {
+      padding: 30px;
+      font-size: 20px;
+    }
+  
+    .sprAdmin-createAdmin-title {
+      font-size: 26px;
+    }
+  }

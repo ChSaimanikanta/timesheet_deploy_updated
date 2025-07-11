@@ -1,0 +1,205 @@
+/* Base styles for the navbar */
+.hamburgermenu-custom-navbar {
+
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.hamburgermenu-logo-container {
+  display: flex;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.hamburgermenu-logo {
+  height: 8.5rem;
+  margin: 0 2rem;
+  font-size: 50px;
+}
+
+.hamburgermenu-logo-text {
+  font-size: 40px; /* Initial font size */
+  color: #ffffff; /* Blue color (light blue shade) */
+  font-weight: bolder;
+  text-align: center;
+  flex-grow: 1;
+  white-space: nowrap; /* Prevent text from wrapping */
+  overflow: hidden; /* Ensure text stays within bounds */
+  text-overflow: ellipsis; /* Add ellipsis if text overflows */
+
+  /* Create a text stroke effect using text-shadow */
+  text-shadow: 
+    2px 2px 4px rgba(0, 0, 0, 0.3),  /* Shadow for a slight 3D effect */
+    -1px -1px 2px rgba(0, 0, 0, 0.3),  /* Shadow for additional depth */
+    1px 0 5px rgba(255, 255, 255, 0.7), /* White highlights for a soft stroke effect */
+    -1px 1px 4px rgba(255, 255, 255, 0.7); /* White highlights for softer stroke */
+}
+
+.hamburgermenu-navbar-toggler {
+  border: none;
+  outline: none;
+}
+
+.hamburgermenu-icon {
+  font-size: 2rem;
+  color: #5a5555;
+}
+
+.navbar-collapse {
+  justify-content: flex-end;
+}
+
+.hamburgermenu-nav-links {
+  display: flex;
+  gap: 1rem;
+}
+
+.hamburgermenu-nav-link {
+  color: #fff;
+  padding: 1rem 1rem;
+  font-size: 15px;
+  margin: 0 2rem;
+  transition: background-color 0.3s;
+}
+
+.hamburgermenu-nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  /* Hover effect */
+}
+
+.login-button {
+  background-color: #0056b3;
+  color: white;
+  border: none;
+  padding: 0.5rem 1.5rem;
+  border-radius: 0.50rem;
+  transition: background-color 0.3s;
+  margin: 0 3rem;
+  font-size: 15px;
+}
+
+.login-button:hover {
+  background-color: rgb(130, 114, 114);
+}
+
+/* Media Queries */
+
+/* For tablets and below (up to 992px) */
+@media (max-width: 992px) {
+  .hamburgermenu-logo-container {
+    flex-direction: column; /* Stack logo and text vertically */
+    align-items: center;
+    text-align: center;
+  }
+
+  .hamburgermenu-logo {
+    height: 6rem; /* Reduce logo size for smaller screens */
+    margin: 0;
+  }
+
+  .hamburgermenu-logo-text {
+    font-size: 24px; /* Slightly smaller font size for tablets */
+    margin-left: 0; /* Remove left margin on tablets */
+    margin-top: 10px; /* Add margin to give space between the logo and text */
+    text-align: center; /* Ensure text is centered on tablets */
+    white-space: normal; /* Allow the text to wrap on smaller screens */
+  }
+
+  .hamburgermenu-nav-links {
+    display: none; /* Hide nav links by default */
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+
+  .hamburgermenu-nav-link {
+    font-size: 18px; /* Larger text for easier navigation */
+    padding: 1rem 0; /* Adjust padding for easier tap */
+    margin: 0; /* Remove margin for better stacking */
+  }
+
+  .hamburgermenu-navbar-toggler {
+    display: block; /* Show hamburger menu */
+  }
+
+  .hamburgermenu-nav-links.show {
+    display: flex; /* Show the nav links when the menu is expanded */
+  }
+}
+
+/* For mobile screens (up to 768px) */
+@media (max-width: 768px) {
+  .hamburgermenu-logo-container {
+    flex-direction: column; /* Stack logo and text vertically */
+    align-items: center;
+    text-align: center;
+  }
+
+  .hamburgermenu-logo {
+    height: 5rem; /* Further reduce logo size */
+    margin: 0;
+  }
+
+  .hamburgermenu-logo-text {
+    font-size: 20px; /* Reduce font size for mobile screens */
+    margin-left: 0; /* Remove margin to allow for better centering */
+    margin-top: 8px; /* Adjust top margin for spacing */
+    text-align: center; /* Ensure text is centered */
+  }
+
+  .hamburgermenu-nav-links {
+    display: none;
+  }
+
+  .hamburgermenu-nav-link {
+    font-size: 16px; /* Adjust text size for better legibility */
+  }
+
+  .hamburgermenu-navbar-toggler {
+    display: block;
+  }
+
+  .hamburgermenu-nav-links.show {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .hamburgermenu-nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.2); /* Maintain hover effect */
+  }
+
+  .login-button {
+    font-size: 14px; /* Smaller font for login button */
+    padding: 0.5rem 1rem;
+    margin: 1rem 0;
+  }
+}
+
+/* For extra small mobile screens (up to 480px) */
+@media (max-width: 480px) {
+  .hamburgermenu-logo {
+    height: 4.5rem; /* Smaller logo */
+  }
+
+ .hamburgermenu-logo-text {
+    font-size: 16px; /* Smaller font for very small screens */
+    margin-left: 0; /* Remove left margin completely */
+    margin-top: 6px; /* Adjust spacing */
+    padding: 0 10px; /* Add padding for small screens */
+    text-align: center; /* Keep text centered */
+  }
+
+  .hamburgermenu-nav-link {
+    font-size: 14px; /* Adjust font size for mobile screens */
+    padding: 1rem 0;
+  }
+
+  .login-button {
+    font-size: 12px; /* Even smaller font size for the login button */
+    padding: 0.5rem 1rem;
+  }
+}

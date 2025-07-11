@@ -1,0 +1,107 @@
+.table-responsive {
+    overflow-x: auto;
+}
+
+/* Media Queries for Responsive Design */
+@media (max-width: 992px) {
+    .table-header th,
+    .table-hover tbody tr td {
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 768px) {
+    .table-header th,
+    .table-hover tbody tr td {
+        font-size: 12px;
+    }
+
+    .search-control {
+        width: 100%;
+        text-align: center;
+    }
+
+    .buttons {
+        display: flex;
+        justify-content: center;
+        margin-top: 1rem;
+    }
+
+    .btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 576px) {
+    .table-header th,
+    .table-hover tbody tr td {
+        font-size: 10px;
+    }
+
+    .search-control {
+        font-size: 14px;
+    }
+
+    .buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .btn {
+        margin-bottom: 0.5rem;
+    }
+}
+
+@media (max-width: 1200px) {
+    .table-header th,
+    .table-hover tbody tr td {
+        font-size: 15px;
+        padding: 0.5rem 2rem;
+    }
+}
+
+/* Large screens (lg, xl) */
+@media (min-width: 992px) {
+    html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+    }
+
+    .background-clr {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        width: 100%;
+        padding: 20px;
+        background-color: #f8f9fa;
+        margin-bottom: 600px;
+    }
+
+    .employee-form {
+        width: 100%;
+        max-width: 800px;
+        background: white;
+        padding: 40px;
+        border-radius: 8px;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        /* margin: 5rem auto;
+        margin-bottom: 15px; */
+    }
+}
+
+
+/* Enable scrolling on smaller screens */
+@media (max-width: 991px) {
+    html, body {
+        overflow: auto;
+    }
+
+    .background-clr {
+        height: auto;
+        padding: 20px;
+    }
+}

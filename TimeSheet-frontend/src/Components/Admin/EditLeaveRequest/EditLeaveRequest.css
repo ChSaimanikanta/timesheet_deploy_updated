@@ -1,0 +1,33 @@
+.ti-leave-management-container{
+    width: 70%;
+    margin: 0 auto;  
+     
+  }
+
+  .leave-row{
+    display: flex;
+  }
+
+  .leave-row label{
+    width: 100px;
+    /* background-color: blueviolet; */
+    text-align: right;
+    margin-right: 5px;
+  }
+
+  .leave-row textarea{
+    
+    /* width: 100%; */
+    min-width: 250px;
+    height:100% ;
+    min-height: 100px;
+  }
+
+  .center-align{
+    
+    margin: 0 auto; /* This will center the div horizontally */
+    text-align: left; /* Align text content to the left */
+    width: fit-content; /* Adjust width to content */
+  }
+
+  

@@ -1,0 +1,56 @@
+/* for navbar  */
+
+
+
+/* for header */
+.ti-navbar-bg{
+    background-color: #1C2FBA;
+}
+
+.ti-navbar-header{
+    width: 90%;
+    margin: 0 auto;
+    padding: 5px;
+}
+
+.ti-navbar-header .first-half{
+    width: 50%;
+}
+
+.ti-navbar-header .seconds-half{
+    width: 50%;
+}
+.ti-time{
+    margin-right: 50px;
+}
+
+.ti-sign-in{
+    border: 2px solid white;
+    margin-top: 4px;
+    padding:0 5px;
+    border-radius: 30px;
+    
+}
+
+/* super admin navigation */
+.superadmin-navigation{
+    background-color:#F5FFD7;
+}
+
+.superadmin-navigation-link{
+    background-color: #fff;
+    color: black !important;
+    border:2px solid black;
+    margin:5px 10px;
+    border-radius: 5px;
+}
+
+.superadmin-navigation-link:hover{
+    box-shadow: 5px 5px 0 gray;
+}
+
+.superadmin-navigation .active{
+    background-color: #1C2FBA;
+    color:#fff !important;
+
+}
