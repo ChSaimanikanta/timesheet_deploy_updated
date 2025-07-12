@@ -18,6 +18,8 @@ const UpdateProjectDetails = () => {
   const [projectId, setProjectId] = useState("");
   const [searchResult, setSearchResult] = useState(null);
   const [editing, setEditing] = useState(false);
+   const [showModal, setShowModal] = useState(false);
+
   const [updatedProject, setUpdatedProject] = useState({
     projectTitle: "",
     projectDescription: "",
@@ -184,11 +186,12 @@ const UpdateProjectDetails = () => {
       await axios.delete(
         `${serverUrl}/admin/projects/${projectId}?adminId=${adminId}`
       );
-      alert("Project archived successfully!");
+      // alert("Project archived successfully!");
       navigate("/admin");
     } catch (error) {
       alert("Error archiving project. Please try again.");
     }
+    setShowModal(false);
   };
   useEffect(() => {
     const fetchProjects = async () => {
@@ -263,30 +266,49 @@ const UpdateProjectDetails = () => {
           <div className="col d-flex project-search-form-container"> {/* Renamed container */}
             <form onSubmit={handleSearch} className="w-100">
               <p className="sprAdmin-createAdmin-title mb-4" style={{ color: "white" }}>Search Project</p>
-              <div className="mb-2 d-flex align-items-center">
-                <label className="project-id-label me-2" style={{ color: "white" }}>Select Project ID:</label>
-                <select
-                  className="project-id-input form-control me-2"
-                  value={projectId || ""}
-                  onChange={(e) => setProjectId(e.target.value)}
-                >
-                  <option value="" disabled>
-                    Select a Project ID
-                  </option>
-                  {availableProjects.map((project) => (
-                    <option key={project.projectId} value={project.projectId}>
-                      {project.projectId} - {project.projectTitle}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  className="project-search-button btn btn-primary"
-                  onClick={handleClick}
-                >
-                  Search
-                </button>
-              </div>
+              <div className="container">
+  <div className="row mb-2 align-items-center">
+    <div className="col-12 col-md-auto mb-2 mb-md-0">
+      <label
+  className="project-id-label"
+  htmlFor="projectId"
+  style={{ color: "white", fontSize: "1.5rem", fontWeight: "bold" }}
+>
+  Select Project ID:
+</label>
+
+    </div>
+
+    <div className="col-12 col-md-6 mb-2 mb-md-0">
+      <select
+        id="projectId"
+        className="form-control"
+        value={projectId || ""}
+        onChange={(e) => setProjectId(e.target.value)}
+      >
+        <option value="" disabled>
+          Select a Project ID
+        </option>
+        {availableProjects.map((project) => (
+          <option key={project.projectId} value={project.projectId}>
+            {project.projectId} - {project.projectTitle}
+          </option>
+        ))}
+      </select>
+    </div>
+
+    <div className="col-12 col-md-auto">
+      <button
+        type="button"
+        className="btn btn-primary w-100 w-md-auto"
+        onClick={handleClick}
+      >
+        Search
+      </button>
+    </div>
+  </div>
+</div>
+
 
 
             </form>
@@ -517,13 +539,55 @@ const UpdateProjectDetails = () => {
                       >
                         Save
                       </button>
-                      <button
-                        type="button"
-                        className="btn btn-danger mx-2"
-                        onClick={handleArchive}
-                      >
-                        Delete
-                      </button>
+                       <button
+        type="button"
+        className="btn btn-danger mx-2"
+        onClick={() => setShowModal(true)}
+      >
+        Delete
+      </button>
+                      {showModal && (
+  <div
+    className="modal show fade d-block"
+    tabIndex="-1"
+    style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+  >
+    <div className="d-flex justify-content-center align-items-center vh-100">
+      <div className="modal-dialog">
+        <div className="modal-content">
+          <div className="modal-header">
+            <h5 className="modal-title">Confirm Deletion</h5>
+            <button
+              type="button"
+              className="btn-close"
+              onClick={() => setShowModal(false)}
+            ></button>
+          </div>
+          <div className="modal-body">
+            <p>Are you sure you want to Delete this project?</p>
+          </div>
+          <div className="modal-footer">
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => setShowModal(false)}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="btn btn-danger"
+              onClick={handleArchive}
+            >
+              Confirm
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
+
                       <button
                         type="button"
                         className="btn btn-secondary mx-2"
