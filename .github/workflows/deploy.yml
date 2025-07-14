@@ -1,0 +1,35 @@
+name: Deploy Timesheet App to On-Prem Ubuntu 22 Server
+
+on:
+  push:
+    branches:
+      - main  # Trigger deployment when changes are pushed to main branch
+
+jobs:
+  deploy:
+    name: Deploy to On-Prem Ubuntu Server
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code from GitHub
+        uses: actions/checkout@v3
+
+      - name: Setup SSH access to Ubuntu 22 server
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
+
+      - name: Copy code to On-Prem Ubuntu 22 server
+        run: |
+          rsync -avz --delete ./ \
+            chileson-2025@${{ secrets.SERVER_IP }}:/home/chileson-2025/timesheet-app
+
+      - name: Deploy Timesheet App using Docker Compose
+        run: |
+          ssh chileson-2025@${{ secrets.SERVER_IP }} << 'EOF'
+            cd /home/chileson-2025/timesheet-app
+            docker-compose down
+            docker-compose up -d --build
+          EOF

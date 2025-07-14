@@ -1,4 +1,4 @@
-export const serverUrl = "http://192.168.0.102:4555/api";
+export const serverUrl = "http://49.204.233.160:4555/api";
 
 // const ssuperadmin=`${serverUrl}:8089`
 // export const superadmin = `${serverUrl}:8089`;
@@ -9,3 +9,4 @@ export const serverUrl = "http://192.168.0.102:4555/api";
 // export const employeeWorkingHours_Url = `${serverUrl}:8090`;
 // export const leaveRequest_Url = `${serverUrl}:8087`;
 // export const login_Url = `${serverUrl}:8088`;
+

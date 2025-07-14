@@ -185,7 +185,7 @@ services:
     ports:
       - "3000:80"
     environment:
-      - HOST=192.168.0.102
+      - HOST=49.204.233.160
       - PORT=3000
     networks:
       - app-network

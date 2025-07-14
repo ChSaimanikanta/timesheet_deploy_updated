@@ -45,9 +45,10 @@ const [existingTitles, setExistingTitles] = useState([]);
   // const validateEmployeeID = (id) => /^EMP\d{3}$/.test(id);
 
 const validateID = (id) => {
-  // Checks that the ID is a non-empty string containing only alphanumeric characters and is 3-10 characters long
-  return /^[a-zA-Z0-9]{3,10}$/.test(id);
+  // Allows uppercase letters, digits, and hyphens, between 5 and 15 characters
+  return /^[A-Z0-9-]{5,15}$/i.test(id);
 };
+
 
 
   const handleTeamMemberChange = (index, value) => {
