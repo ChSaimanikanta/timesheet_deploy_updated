@@ -304,6 +304,7 @@ useEffect(() => {
                                     ? "red"
                                     : "blue",
                               color: "white", // Set the text color to white for better visibility
+                              cursor: "default",
                             }}
                           >
                             {statusValue}
