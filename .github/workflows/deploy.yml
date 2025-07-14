@@ -26,12 +26,20 @@ jobs:
           rsync -avz --delete ./ \
             chileson-2025@${{ secrets.SERVER_IP }}:/home/chileson-2025/timesheet_deploy_updated
 
-      - name: Docker Compose Down and Up
+      - name: Verify Latest Commit on Server
+        run: |
+          ssh chileson-2025@${{ secrets.SERVER_IP }} << 'EOF'
+            cd /home/chileson-2025/timesheet_deploy_updated
+            echo "Latest commit deployed:"
+            git log -1 --oneline || echo "Git metadata not available"
+          EOF
+
+      - name: Restart Docker with Rebuild
         run: |
           ssh chileson-2025@${{ secrets.SERVER_IP }} << 'EOF'
             cd /home/chileson-2025/timesheet_deploy_updated
             echo "Stopping existing containers..."
             docker-compose down --remove-orphans
-            echo "Starting updated containers..."
-            docker-compose up -d
+            echo "Starting updated containers with rebuild..."
+            docker-compose up --build -d
           EOF
