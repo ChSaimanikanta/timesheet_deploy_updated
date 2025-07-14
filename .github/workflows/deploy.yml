@@ -3,7 +3,7 @@ name: Deploy Timesheet App to On-Prem Ubuntu 22 Server
 on:
   push:
     branches:
-      - main
+      - main  # Trigger deployment on push to main
 
 jobs:
   deploy:
@@ -11,25 +11,27 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code from GitHub
+      - name: Checkout Code from GitHub
         uses: actions/checkout@v3
 
-      - name: Setup SSH access to Ubuntu 22 server
+      - name: Setup SSH Access to Ubuntu 22 Server
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
 
-      - name: Copy code to On-Prem Server
+      - name: Copy Code to On-Prem Server
         run: |
           rsync -avz --delete ./ \
             chileson-2025@${{ secrets.SERVER_IP }}:/home/chileson-2025/timesheet_deploy_updated
 
-      - name: Restart Docker containers
+      - name: Docker Compose Down and Up
         run: |
           ssh chileson-2025@${{ secrets.SERVER_IP }} << 'EOF'
             cd /home/chileson-2025/timesheet_deploy_updated
-            docker-compose down
+            echo "Stopping existing containers..."
+            docker-compose down --remove-orphans
+            echo "Starting updated containers..."
             docker-compose up -d
           EOF
