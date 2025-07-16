@@ -42,70 +42,57 @@ function RejectTimesheet() {
   const navigate = useNavigate();
 
 
-  useEffect(() => {
-    async function getRejectTimesheet() {
-      if (!employeeId) {
-        console.warn("Admin ID is missing.");
-        return;
+useEffect(() => {
+  async function getRejectTimesheet() {
+    if (!employeeId) return;
+
+    try {
+      const response = await axios.get(`${serverUrl}/workinghours/employee/${employeeId}/new`);
+      const submittedEntries = response.data.flat();
+
+      // Filter rejected entries only
+      const rejectedEntries = submittedEntries.filter(entry => entry.status === "REJECTED");
+
+      // You can further filter for current month if needed:
+      const currentYear = new Date().getFullYear();
+      const currentMonth = new Date().getMonth(); // zero-based
+
+      const filteredRejected = rejectedEntries.filter(entry => {
+        const date = new Date(entry.date);
+        return date.getFullYear() === currentYear && date.getMonth() === currentMonth;
+      });
+
+      if (filteredRejected.length > 0) {
+        const sorted = filteredRejected.sort((a, b) => new Date(a.date) - new Date(b.date));
+        const firstDate = sorted[0].date;
+        const lastDate = sorted[sorted.length - 1].date;
+
+        setStartSubmitDate(firstDate);
+        setEndSubmitDate(lastDate);
+        setSubmitEmployeeId(sorted[0].employeeId);
+        setSubmitTimesheetStatus("REJECTED"); // explicitly show rejected status
+        setViewRejectReason(sorted[0].rejectionReason || "");
+
+        const updatedData = sorted.map(entry => ({
+          ...entry,
+          rejectionReason: entry.rejectionReason || null,
+          status: "NEW", // reset to allow editing/resubmission
+        }));
+
+        setTimesheetData(updatedData);
+        setEditableData(updatedData);
+        dispatch(submitOFF(false));
+      } else {
+        setSubmitTimesheetStatus("No Rejected Timesheet Found");
       }
-
-      try {
-        let today = new Date();
-        let startDate, endDate;
-
-        if (today.getDate() <= 15) {
-          startDate = new Date(today.getFullYear(), today.getMonth(), 1);
-          endDate = new Date(today.getFullYear(), today.getMonth(), 15);
-        } else {
-          startDate = new Date(today.getFullYear(), today.getMonth(), 16);
-          endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-        }
-
-        endDate.setHours(23, 59, 59, 999);
-        let formattedStartDate = startDate.toISOString().split("T")[0];
-        let formattedEndDate = endDate.toISOString().split("T")[0];
-
-        console.log("Fetching rejected timesheet:", formattedStartDate, "to", formattedEndDate);
-
-        const response = await axios.get(
-          `${serverUrl}/workinghours/employee/${employeeId}/range?startDate=${formattedStartDate}&endDate=${formattedEndDate}`
-        );
-
-        const datas = response.data;
-
-        if (datas.length > 0) {
-          let firstEntry = datas[0];
-          let lastEntry = datas[datas.length - 1];
-
-          setStartSubmitDate(firstEntry.date);
-          setEndSubmitDate(lastEntry.date);
-          setSubmitEmployeeId(firstEntry.employeeId);
-          setSubmitTimesheetStatus(firstEntry.status);
-
-          if (firstEntry.status === "REJECTED") {
-            const updatedData = datas.map((data) => ({
-              ...data,
-              rejectionReason: null,
-              status: "NEW",
-            }));
-
-            setTimesheetData(updatedData);
-            setEditableData(updatedData);
-            setViewRejectReason(firstEntry.rejectionReason || "");
-            dispatch(submitOFF(false));
-          } else {
-            dispatch(submitON(true));
-          }
-        } else {
-          setSubmitTimesheetStatus("No Data Submitted");
-        }
-      } catch (error) {
-        console.error("Error fetching rejected timesheet data:", error);
-      }
+    } catch (error) {
+      console.error("Error fetching rejected timesheet data:", error);
     }
+  }
 
-    getRejectTimesheet();
-  }, [employeeId, serverUrl, dispatch]);
+  getRejectTimesheet();
+}, [employeeId]);
+
 
   useEffect(() => {
     const fetchProjects = async () => {
