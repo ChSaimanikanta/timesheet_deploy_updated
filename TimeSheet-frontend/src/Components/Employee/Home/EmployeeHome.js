@@ -34,70 +34,56 @@ function EmployeeHome() {
   const [selectedId, setSelectedId] = useState(null);
   // Fetch timesheet submission data dynamically
   useEffect(() => {
-    async function fetchTimesheetData() {
-      if (!employeeId) {
-        console.warn("Employee ID is missing.");
-        return;
+  async function fetchTimesheetData() {
+    if (!employeeId) return;
+
+    try {
+      const response = await axios.get(`${serverUrl}/workinghours/employee/${employeeId}/new`);
+      const submittedEntries = response.data.flat();
+
+      let firstHalf = submittedEntries.filter(entry => {
+        const day = new Date(entry.date).getDate();
+        return day >= 1 && day <= 15;
+      });
+
+      let secondHalf = submittedEntries.filter(entry => {
+        const day = new Date(entry.date).getDate();
+        return day >= 16;
+      });
+
+      let timesheetToShow = [];
+
+      if (secondHalf.length > 0) {
+        timesheetToShow = secondHalf;
+      } else if (firstHalf.length > 0) {
+        timesheetToShow = firstHalf;
       }
 
-      let today = new Date();
-      let startDate, endDate;
+      if (timesheetToShow.length > 0) {
+        const sortedData = timesheetToShow.sort((a, b) => new Date(a.date) - new Date(b.date));
+        const firstDate = sortedData[0].date;
+        const lastDate = sortedData[sortedData.length - 1].date;
 
-      // ✅ Determine correct timesheet period
-      if (today.getDate() <= 15) {
-        startDate = new Date(today.getFullYear(), today.getMonth(), 1); // First half (1st to 15th)
-        endDate = new Date(today.getFullYear(), today.getMonth(), 15);
-      } else {
-        startDate = new Date(today.getFullYear(), today.getMonth(), 16); // Second half (16th to last day)
-        endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-      }
+        setStartSubmitDate(firstDate);
+        setEndSubmitDate(lastDate);
+        setSubmitEmployeeId(sortedData[0].employeeId);
+        setStatusValue(sortedData[0].status);
 
-      // ✅ Ensure endDate covers the entire day
-      endDate.setHours(23, 59, 59, 999);
-
-      // ✅ Format dates correctly to prevent timezone shifts
-      let formattedStartDate = startDate.toLocaleDateString('en-CA'); // Correct format YYYY-MM-DD
-      let formattedEndDate = endDate.toLocaleDateString('en-CA');
-
-      console.log("Fetching timesheet:", formattedStartDate, "to", formattedEndDate);
-
-      try {
-        let response = await axios.get(
-          `${serverUrl}/workinghours/employee/${employeeId}/range?startDate=${formattedStartDate}&endDate=${formattedEndDate}`
-        );
-
-        let data = response.data;
-
-        console.log("API Response:", data);
-
-        if (data.length > 0) {
-          // ✅ Sort data to ensure correct start and end dates
-          let sortedData = data.sort((a, b) => new Date(a.date) - new Date(b.date));
-
-          let firstDate = sortedData[0].date;  // ✅ First entry in sorted data
-          let lastDate = sortedData[sortedData.length - 1].date;  // ✅ Last entry in sorted data
-
-          setStartSubmitDate(firstDate);
-          setEndSubmitDate(lastDate);
-          setSubmitEmployeeId(sortedData[0].employeeId);
-          setStatusValue(sortedData[0].status);
-
-          // ✅ Update submission status dynamically
-          if (sortedData[0].status === "APPROVED" || sortedData[0].status === "REJECTED") {
-            dispatch(submitOFF(false));
-          } else {
-            dispatch(submitON(true));
-          }
+        if (sortedData[0].status === "APPROVED" || sortedData[0].status === "REJECTED") {
+          dispatch(submitOFF(false));
         } else {
-          setStatusValue("No Data Submitted");
+          dispatch(submitON(true));
         }
-      } catch (error) {
-        console.error("Error fetching timesheet data:", error);
+      } else {
+        setStatusValue("No Data Submitted");
       }
+    } catch (error) {
+      console.error("Error fetching timesheet data:", error);
     }
+  }
 
-    fetchTimesheetData();
-  }, [employeeId, dispatch, serverUrl, submitON, submitOFF]);
+  fetchTimesheetData();
+}, [employeeId]);
 
   async function leaveStatus() {
     let response = await axios.get(
