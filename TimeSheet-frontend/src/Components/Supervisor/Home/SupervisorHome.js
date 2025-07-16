@@ -32,71 +32,67 @@ function SupervisorHome() {
   const [leaveRequests, setLeaveRequests] = useState([]);
  
 
- useEffect(() => {
+useEffect(() => {
   async function fetchTimesheetData() {
-    if (!supervisorId) {
-      console.warn("Supervisor ID is missing.");
-      return;
-    }
-
-    let today = new Date();
-    let startDate, endDate;
-
-    // ✅ Determine correct timesheet period
-    if (today.getDate() <= 15) {
-      startDate = new Date(today.getFullYear(), today.getMonth(), 1); // First half (1st to 15th)
-      endDate = new Date(today.getFullYear(), today.getMonth(), 15);
-    } else {
-      startDate = new Date(today.getFullYear(), today.getMonth(), 16); // Second half (16th to last day)
-      endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-    }
-
-    // ✅ Ensure endDate covers the entire day
-    endDate.setHours(23, 59, 59, 999);
-
-    // ✅ Format dates correctly to prevent timezone shifts
-    let formattedStartDate = startDate.toLocaleDateString('en-CA'); // Correct format YYYY-MM-DD
-    let formattedEndDate = endDate.toLocaleDateString('en-CA');
-
-    console.log("Fetching timesheet:", formattedStartDate, "to", formattedEndDate);
+    if (!supervisorId) return;
 
     try {
-      let response = await axios.get(
+      const today = new Date();
+
+      // 🎯 Define date boundaries for timesheet period
+      const startDate =
+        today.getDate() <= 15
+          ? new Date(today.getFullYear(), today.getMonth(), 1)
+          : new Date(today.getFullYear(), today.getMonth(), 16);
+      const endDate =
+        today.getDate() <= 15
+          ? new Date(today.getFullYear(), today.getMonth(), 15)
+          : new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+      // ⏰ Ensure endDate includes the full day
+      endDate.setHours(23, 59, 59, 999);
+
+      // 📅 Format dates to 'YYYY-MM-DD'
+      const formattedStartDate = startDate.toLocaleDateString('en-CA');
+      const formattedEndDate = endDate.toLocaleDateString('en-CA');
+
+      const response = await axios.get(
         `${serverUrl}/sup/api/working-hours/${supervisorId}/range?startDate=${formattedStartDate}&endDate=${formattedEndDate}`
       );
 
-      let data = response.data;
+      const entries = response.data;
 
-      console.log("API Response:", data);
+      // 🧹 Filter and sort entries
+      if (entries?.length > 0) {
+        const sortedData = entries.sort(
+          (a, b) => new Date(a.date) - new Date(b.date)
+        );
 
-      if (data.length > 0) {
-        // ✅ Sort data to ensure correct start and end dates
-        let sortedData = data.sort((a, b) => new Date(a.date) - new Date(b.date));
-
-        let firstDate = sortedData[0].date;  // ✅ First entry in sorted data
-        let lastDate = sortedData[sortedData.length - 1].date;  // ✅ Last entry in sorted data
+        const firstDate = sortedData[0].date;
+        const lastDate = sortedData[sortedData.length - 1].date;
 
         setStartSubmitDate(firstDate);
         setEndSubmitDate(lastDate);
         setSubmitSupervisorId(sortedData[0].employeeId);
         setStatusValue(sortedData[0].status);
 
-        // ✅ Update submission status dynamically
-        if (sortedData[0].status === "APPROVED" || sortedData[0].status === "REJECTED") {
+        // 🔄 Dispatch based on status
+        const status = sortedData[0].status;
+        if (status === 'APPROVED' || status === 'REJECTED') {
           dispatch(submitOFF(false));
         } else {
           dispatch(submitON(true));
         }
       } else {
-        setStatusValue("No Data Submitted");
+        setStatusValue('No Data Submitted');
       }
     } catch (error) {
-      console.error("Error fetching timesheet data:", error);
+      console.error('Error fetching timesheet data:', error);
     }
   }
 
   fetchTimesheetData();
-}, [supervisorId, dispatch, serverUrl, submitON, submitOFF]);
+}, [supervisorId]);
 
 
   console.log(startSubmitDate);
