@@ -43,63 +43,58 @@ function RejectTimesheet() {
 
 useEffect(() => {
   async function getRejectTimesheet() {
-    if (!supervisorId) {
-      console.warn("Supervisor ID is missing.");
-      return;
-    }
+    if (!supervisorId) return;
 
     try {
-      let today = new Date();
-      let startDate, endDate;
+      // 🗓️ Define date range based on current day
+      const today = new Date();
+      const currentYear = today.getFullYear();
+      const currentMonth = today.getMonth();
+      const isFirstHalf = today.getDate() <= 15;
 
-      // ✅ Correct timesheet range logic
-      if (today.getDate() <= 15) {
-        startDate = new Date(today.getFullYear(), today.getMonth(), 1);
-        endDate = new Date(today.getFullYear(), today.getMonth(), 15);
-      } else {
-        startDate = new Date(today.getFullYear(), today.getMonth(), 16);
-        endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-      }
+      const startDate = new Date(currentYear, currentMonth, isFirstHalf ? 1 : 16);
+      const endDate = isFirstHalf
+        ? new Date(currentYear, currentMonth, 15)
+        : new Date(currentYear, currentMonth + 1, 0);
 
-      // ✅ Fix timezone shifts
+      // 🕒 Ensure timezone-safe boundaries
       startDate.setHours(0, 0, 0, 0);
       endDate.setHours(23, 59, 59, 999);
 
-      // ✅ Use `toLocaleDateString` for consistent formatting
-      let formattedStartDate = startDate.toLocaleDateString('en-CA');
-      let formattedEndDate = endDate.toLocaleDateString('en-CA');
-
-      console.log("Fetching rejected timesheet:", formattedStartDate, "to", formattedEndDate);
+      const formattedStart = startDate.toLocaleDateString('en-CA');
+      const formattedEnd = endDate.toLocaleDateString('en-CA');
 
       const response = await axios.get(
-        `${serverUrl}/sup/api/working-hours/${supervisorId}/range?startDate=${formattedStartDate}&endDate=${formattedEndDate}`
+        `${serverUrl}/sup/api/working-hours/${supervisorId}/range?startDate=${formattedStart}&endDate=${formattedEnd}`
       );
 
-      const datas = response.data;
+      const submittedEntries = response.data.flat();
 
-      if (datas.length > 0) {
-        let firstEntry = datas[0];
-        let lastEntry = datas[datas.length - 1];
+      // 🎯 Filter rejected entries only
+      const rejectedEntries = submittedEntries.filter(entry => entry.status === "REJECTED");
 
-        setStartSubmitDate(firstEntry.date);
-        setEndSubmitDate(lastEntry.date);
-        setSubmitEmployeeId(firstEntry.employeeId);
-        setSubmitTimesheetStatus(firstEntry.status);
+      if (rejectedEntries.length > 0) {
+        const sorted = rejectedEntries.sort((a, b) => new Date(a.date) - new Date(b.date));
+        const firstDate = sorted[0].date;
+        const lastDate = sorted[sorted.length - 1].date;
 
-        // ✅ Ensure rejection handling logic is correct
-        if (firstEntry.status === "REJECTED") {
-          const updatedData = datas.map((data) => ({
-            ...data,
-            rejectionReason: data.rejectionReason || "",
-            status: "NEW",
-          }));
+        setStartSubmitDate(firstDate);
+        setEndSubmitDate(lastDate);
+        setSubmitEmployeeId(sorted[0].employeeId);
+        setSubmitTimesheetStatus("REJECTED");
+        setViewRejectReason(sorted[0].rejectionReason || "");
 
-          setTimesheetData(updatedData);
-          setEditableData(updatedData);
-          setViewRejectReason(firstEntry.rejectionReason || "");
-        }
+        const updatedData = sorted.map(entry => ({
+          ...entry,
+          rejectionReason: entry.rejectionReason || null,
+          status: "NEW",
+        }));
+
+        setTimesheetData(updatedData);
+        setEditableData(updatedData);
+        dispatch(submitOFF(false));
       } else {
-        setSubmitTimesheetStatus("No Data Submitted");
+        setSubmitTimesheetStatus("No Rejected Timesheet Found");
       }
     } catch (error) {
       console.error("Error fetching rejected timesheet data:", error);
@@ -107,7 +102,7 @@ useEffect(() => {
   }
 
   getRejectTimesheet();
-}, [supervisorId, serverUrl]);
+}, [supervisorId]);
 
 
 
