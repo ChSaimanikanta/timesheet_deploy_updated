@@ -12,9 +12,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import com.timesheetcreation.client.EmployeeClient;
 import com.timesheetcreation.client.ProjectClient;
+import com.timesheetcreation.entity.Employee;
 import com.timesheetcreation.entity.Project;
 import com.timesheetcreation.entity.WorkingHour;
+
 import com.timesheetcreation.repo.WorkingHourRepository;
 
 @Service
@@ -24,32 +27,50 @@ public class WorkingHourService {
 
     @Autowired
     private ProjectClient projectClient;
+ 
+ 
+    @Autowired
+    private EmployeeClient employeeClient; // Feign client to fetch employee info
 
-    // Create or Update a WorkingHour
     public WorkingHour saveOrUpdateWorkingHour(WorkingHour workingHour) {
-        Optional<WorkingHour> existingRecord = workingHourRepository
-            .findByEmployeeIdAndProjectIdAndDate(
-                workingHour.getEmployeeId(), workingHour.getProjectId(), workingHour.getDate()
-            );
+        System.out.println("🔍 Looking for employee ID: " + workingHour.getEmployeeId());
+
+        try {
+            Employee employee = employeeClient.getEmployeeById(workingHour.getEmployeeId());
+            System.out.println("✅ Found employee: " + employee.getFirstName());
+            workingHour.setFirstName(employee.getFirstName());
+        } catch (Exception e) {
+            System.out.println("❌ Failed to fetch employee: " + workingHour.getEmployeeId());
+        }
+
+        Optional<WorkingHour> existingRecord = workingHourRepository.findByEmployeeIdAndProjectIdAndDate(
+            workingHour.getEmployeeId(), workingHour.getProjectId(), workingHour.getDate()
+        );
 
         if (existingRecord.isPresent()) {
-            // Update existing entry
             WorkingHour updatedEntry = existingRecord.get();
+            updatedEntry.setFirstName(workingHour.getFirstName());
             updatedEntry.setHours(workingHour.getHours());
             updatedEntry.setStatus(workingHour.getStatus());
             updatedEntry.setRejectionReason(workingHour.getRejectionReason());
             return workingHourRepository.save(updatedEntry);
         } else {
-            // Save new entry
+            workingHour.setStatus(workingHour.getStatus() != null ? workingHour.getStatus() : "NEW");
             return workingHourRepository.save(workingHour);
         }
     }
 
-    // Save multiple WorkingHours
     public List<WorkingHour> saveMultipleWorkingHours(List<WorkingHour> workingHours) {
         List<WorkingHour> savedWorkingHours = new ArrayList<>();
 
         for (WorkingHour workingHour : workingHours) {
+            try {
+                Employee employee = employeeClient.getEmployeeById(workingHour.getEmployeeId());
+                workingHour.setFirstName(employee.getFirstName());
+            } catch (Exception e) {
+                System.out.println("❌ Failed to fetch employee: " + workingHour.getEmployeeId());
+            }
+
             Optional<WorkingHour> existingRecord = workingHourRepository.findByEmployeeIdAndProjectIdAndDate(
                 workingHour.getEmployeeId(), workingHour.getProjectId(), workingHour.getDate()
             );
@@ -57,27 +78,26 @@ public class WorkingHourService {
             if (existingRecord.isPresent()) {
                 WorkingHour updatedEntry = existingRecord.get();
 
-                // Detect changes
                 boolean hoursChanged = updatedEntry.getHours() != workingHour.getHours();
                 boolean rejectionRemoved = updatedEntry.getRejectionReason() != null && workingHour.getRejectionReason() == null;
 
-                // Update fields
+                updatedEntry.setFirstName(workingHour.getFirstName());
                 updatedEntry.setHours(workingHour.getHours());
                 updatedEntry.setStatus(workingHour.getStatus() != null ? workingHour.getStatus() : updatedEntry.getStatus());
                 updatedEntry.setRejectionReason(workingHour.getRejectionReason());
 
-                // Enforce status update if necessary
-                if (hoursChanged || rejectionRemoved || updatedEntry.getStatus().equals("REJECTED") || updatedEntry.getStatus().equals("APPROVED")) {
+                if (hoursChanged || rejectionRemoved ||
+                    "REJECTED".equals(updatedEntry.getStatus()) || "APPROVED".equals(updatedEntry.getStatus())) {
                     updatedEntry.setStatus("NEW");
                 }
 
                 savedWorkingHours.add(workingHourRepository.save(updatedEntry));
             } else {
-                // Set default status for new records
                 workingHour.setStatus(workingHour.getStatus() != null ? workingHour.getStatus() : "NEW");
                 savedWorkingHours.add(workingHourRepository.save(workingHour));
             }
         }
+
         return savedWorkingHours;
     }
 

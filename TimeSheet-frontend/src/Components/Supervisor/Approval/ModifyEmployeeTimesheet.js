@@ -138,20 +138,19 @@ function ModifyEmployeeTimesheet() {
     }
   }
 
-  useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        const response = await axios.get(`${serverUrl}/admin/projects`);
-        let projectDatas = response.data;
-        let projectIds = projectDatas.map((project) => project.projectId);
-        setAvailableProjects(projectIds);
-      } catch (error) {
-        console.error("Error fetching projects:", error);
-      }
-    };
+ useEffect(() => {
+  const fetchAssignedProjects = async () => {
+    try {
+      const response = await axios.get(`${serverUrl}/admin/projects/employees/${id}`);
+      const projectIds = response.data.projects || [];
+      setAvailableProjects(projectIds);
+    } catch (error) {
+      console.error("Error fetching employee project IDs:", error);
+    }
+  };
+  fetchAssignedProjects();
+}, [id]);
 
-    fetchProjects();
-  }, []);
 
   const groupByProject = () => {
     const projectMap = {};
@@ -391,82 +390,63 @@ function ModifyEmployeeTimesheet() {
                     <td style={{ backgroundColor: "#c8e184" }}></td>
                   </tr>
                 </thead>
-                <tbody>
-                  {uniqueProjectIds &&
-                    uniqueProjectIds.map((projectId, index) => (
-                      <tr key={index}>
-                        <td
-                          style={{ width: "120px", backgroundColor: "#e8fcaf" }}
-                        >
-                          <Select
-                            value={
-                              availableProjects.find(
-                                (project) => project === projectId
-                              )
-                                ? { value: projectId, label: projectId }
-                                : null
-                            }
-                            options={availableProjects.map((projectId) => ({
-                              value: projectId,
-                              label: projectId,
-                            }))}
-                            className="AddTimesheet my-2"
-                            styles={{
-                              control: (base) => ({
-                                ...base,
-                                minWidth: "150px", // Adjust the width here
-                              }),
-                              menu: (base) => ({
-                                ...base,
-                                minWidth: "150px", // Adjust dropdown menu width
-                              }),
-                            }}
-                            onChange={(selectedOption) =>
-                              updateProject(selectedOption.value, index)
-                            }
-                          />
-                        </td>
-                        {uniqueDates.map((date) => (
-                          <td key={date} style={{ backgroundColor: "#e8fcaf" }}>
-                            <input
-                              type="text"
-                              inputMode="numeric"
-                              className="AddTimesheet form-control my-3 text-center"
-                              min={0}
-                              max={12}
-                              placeholder="0"
-                              disabled={
-                                findOutDay(date).toLowerCase() === "sun"
-                              }
-                              value={
-                                editableData.find(
-                                  (entry) =>
-                                    entry.projectId === projectId &&
-                                    entry.date === date
-                                )?.hours || ""
-                              }
-                              onChange={(e) =>
-                                handleHoursChange(
-                                  projectId,
-                                  date,
-                                  e.target.value
-                                )
-                              }
-                            />
-                          </td>
-                        ))}
-                        <td style={{ backgroundColor: "#e8fcaf" }}>
-                          <button
-                            type="button"
-                            className="AddTimesheet btn btn-danger my-3"
-                            onClick={() => deleteProjectRow(index)}
-                          >
-                            X
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                </tbody>
+                 <tbody>
+      {uniqueProjectIds.length > 0 &&
+        uniqueProjectIds.map((projectId, index) => (
+          <tr key={index}>
+            <td style={{ width: "120px", backgroundColor: "#e8fcaf" }}>
+              <Select
+  value={
+    availableProjects.includes(projectId)
+      ? { value: projectId, label: projectId }
+      : { value: "", label: "Select Project" }
+  }
+  options={availableProjects.map((projectId) => ({
+    value: projectId,
+    label: projectId
+  }))}
+  onChange={(selectedOption) => updateProject(selectedOption.value, index)}
+  className="AddTimesheet my-2"
+  styles={{
+    control: (base) => ({ ...base, minWidth: "150px" }),
+    menu: (base) => ({ ...base, minWidth: "150px" })
+  }}
+/>
+
+            </td>
+            {uniqueDates.map((date) => (
+              <td key={date} style={{ backgroundColor: "#e8fcaf" }}>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  className="AddTimesheet form-control my-3 text-center"
+                  min={0}
+                  max={12}
+                  placeholder="0"
+                  disabled={findOutDay(date).toLowerCase() === "sun"}
+                  value={
+                    editableData.find(
+                      (entry) => entry.projectId === projectId && entry.date === date
+                    )?.hours || ""
+                  }
+                  onChange={(e) =>
+                    handleHoursChange(projectId, date, e.target.value)
+                  }
+                />
+              </td>
+            ))}
+            <td style={{ backgroundColor: "#e8fcaf" }}>
+              <button
+                type="button"
+                className="AddTimesheet btn btn-danger my-3"
+                onClick={() => deleteProjectRow(index)}
+              >
+                X
+              </button>
+            </td>
+          </tr>
+        ))}
+    </tbody>
               </table>
               <div className="d-flex ">
                 <button

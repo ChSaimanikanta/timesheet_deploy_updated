@@ -44,10 +44,12 @@ function ApproveTimesheet() {
           const endDate = workingHours[workingHours.length - 1].date;
           const totalHours = employeeData.totalHours;
           const employeeId=employeeData.employeeId;
-          timehseetData=[...timehseetData,{employeeId,startDate,endDate,totalHours,checked:false}];
+        // 🔥 Dynamically get the firstName from any entry that has it
+  const firstName = employeeData.workingHours.find(entry => entry.firstName)?.firstName || "Unknown";
+          timehseetData=[...timehseetData,{employeeId,firstName,startDate,endDate,totalHours,checked:false}];
         }
         
-            setTimesheetDatas(timehseetData.slice(-5));
+            setTimesheetDatas(timehseetData);
          
            
         
@@ -234,6 +236,7 @@ function ApproveTimesheet() {
                 <tr className="text-center spr-approval-header" >
                   <th className="first"> <input className="me-1" type="checkbox" checked={selectAllChecked} onChange={selectAllCheckbox} />Select </th>
                   <th>Employee Id</th>
+                  <th>FirstName</th>
                   <th>Start Date</th>
                   <th>End Date</th>
                   <th>No hrs Submitted</th>
@@ -253,6 +256,7 @@ function ApproveTimesheet() {
                       ></input>
                     </td>
                     <td>{sheet.employeeId}</td>
+                    <td>{sheet.firstName}</td>
                     <td>{sheet.startDate}</td>
                     <td>{sheet.endDate}</td>
                     <td>{sheet.totalHours}</td>

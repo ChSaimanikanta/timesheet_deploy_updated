@@ -16,12 +16,13 @@ import lombok.NoArgsConstructor;
 @Data
 public class WorkingHour {
 
-    public WorkingHour(String employeeId2, String projectId2, LocalDate date2, int hours2, String status2) {
+    public WorkingHour(String employeeId2, String firstName2, String projectId2, LocalDate date2, int hours2, String status2) {
 		// TODO Auto-generated constructor stub
 	}
 	@Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    private String firstName;
     private String employeeId;
     private String projectId;
     private LocalDate date;
