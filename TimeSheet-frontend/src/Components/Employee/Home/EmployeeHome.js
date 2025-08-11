@@ -34,56 +34,56 @@ function EmployeeHome() {
   const [selectedId, setSelectedId] = useState(null);
   // Fetch timesheet submission data dynamically
   useEffect(() => {
-  async function fetchTimesheetData() {
-    if (!employeeId) return;
+    async function fetchTimesheetData() {
+      if (!employeeId) return;
 
-    try {
-      const response = await axios.get(`${serverUrl}/workinghours/employee/${employeeId}/new`);
-      const submittedEntries = response.data.flat();
+      try {
+        const response = await axios.get(`${serverUrl}/workinghours/employee/${employeeId}/new`);
+        const submittedEntries = response.data.flat();
 
-      let firstHalf = submittedEntries.filter(entry => {
-        const day = new Date(entry.date).getDate();
-        return day >= 1 && day <= 15;
-      });
+        let firstHalf = submittedEntries.filter(entry => {
+          const day = new Date(entry.date).getDate();
+          return day >= 1 && day <= 15;
+        });
 
-      let secondHalf = submittedEntries.filter(entry => {
-        const day = new Date(entry.date).getDate();
-        return day >= 16;
-      });
+        let secondHalf = submittedEntries.filter(entry => {
+          const day = new Date(entry.date).getDate();
+          return day >= 16;
+        });
 
-      let timesheetToShow = [];
+        let timesheetToShow = [];
 
-      if (secondHalf.length > 0) {
-        timesheetToShow = secondHalf;
-      } else if (firstHalf.length > 0) {
-        timesheetToShow = firstHalf;
-      }
-
-      if (timesheetToShow.length > 0) {
-        const sortedData = timesheetToShow.sort((a, b) => new Date(a.date) - new Date(b.date));
-        const firstDate = sortedData[0].date;
-        const lastDate = sortedData[sortedData.length - 1].date;
-
-        setStartSubmitDate(firstDate);
-        setEndSubmitDate(lastDate);
-        setSubmitEmployeeId(sortedData[0].employeeId);
-        setStatusValue(sortedData[0].status);
-
-        if (sortedData[0].status === "APPROVED" || sortedData[0].status === "REJECTED") {
-          dispatch(submitOFF(false));
-        } else {
-          dispatch(submitON(true));
+        if (secondHalf.length > 0) {
+          timesheetToShow = secondHalf;
+        } else if (firstHalf.length > 0) {
+          timesheetToShow = firstHalf;
         }
-      } else {
-        setStatusValue("No Data Submitted");
-      }
-    } catch (error) {
-      console.error("Error fetching timesheet data:", error);
-    }
-  }
 
-  fetchTimesheetData();
-}, [employeeId]);
+        if (timesheetToShow.length > 0) {
+          const sortedData = timesheetToShow.sort((a, b) => new Date(a.date) - new Date(b.date));
+          const firstDate = sortedData[0].date;
+          const lastDate = sortedData[sortedData.length - 1].date;
+
+          setStartSubmitDate(firstDate);
+          setEndSubmitDate(lastDate);
+          setSubmitEmployeeId(sortedData[0].employeeId);
+          setStatusValue(sortedData[0].status);
+
+          if (sortedData[0].status === "APPROVED" || sortedData[0].status === "REJECTED") {
+            dispatch(submitOFF(false));
+          } else {
+            dispatch(submitON(true));
+          }
+        } else {
+          setStatusValue("No Data Submitted");
+        }
+      } catch (error) {
+        console.error("Error fetching timesheet data:", error);
+      }
+    }
+
+    fetchTimesheetData();
+  }, [employeeId]);
 
   async function leaveStatus() {
     let response = await axios.get(
@@ -311,36 +311,36 @@ function EmployeeHome() {
                           <div className="d-flex align-items-center mb-2">
                             {/* STATUS Label */}
                             <p className="mb-0 me-2" style={{ fontSize: "14px", color: "#555" }}>
-                             <strong>STATUS:</strong>
+                              <strong>STATUS:</strong>
                             </p>
 
                             {/* Buttons in one line */}
                             <div className="d-flex gap-3 align-items-center">
                               {/* Status Button */}
                               <button
-  className="view-btn"
-  style={{
-    backgroundColor:
-      leave.status === "APPROVED"
-        ? "green"
-        : leave.status === "REJECTED"
-          ? "red"
-          : "blue",
-    color: "white",
-    height: "30px",
-    width: "120px",
-    border: "none",
-    borderRadius: "4px",
-    padding: "0 10px",
-    fontSize: "14px",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    cursor: "default", // 👈 This makes the arrow appear on hover
-  }}
->
-  {leave.status}
-</button>
+                                className="view-btn"
+                                style={{
+                                  backgroundColor:
+                                    leave.status === "APPROVED"
+                                      ? "green"
+                                      : leave.status === "REJECTED"
+                                        ? "red"
+                                        : "blue",
+                                  color: "white",
+                                  height: "30px",
+                                  width: "120px",
+                                  border: "none",
+                                  borderRadius: "4px",
+                                  padding: "0 10px",
+                                  fontSize: "14px",
+                                  display: "flex",
+                                  justifyContent: "center",
+                                  alignItems: "center",
+                                  cursor: "default", // 👈 This makes the arrow appear on hover
+                                }}
+                              >
+                                {leave.status}
+                              </button>
 
 
                               {/* Cancel Button - Only when status is PENDING */}

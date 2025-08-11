@@ -19,6 +19,7 @@ public class LeaveRequest {
     private Long id;
     
     private String supervisorId;
+    private String firstName;
     private String adminId;
     private LocalDate startDate;
     private LocalDate endDate;

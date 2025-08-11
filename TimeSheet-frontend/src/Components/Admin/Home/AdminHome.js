@@ -247,7 +247,7 @@ useEffect(() => {
                   </ul>
                   <ul>
                     <Link to={"/admin/adminapproveleaverequest"}>
-                      Approve Leave Request
+                      Approve or Reject Supervisor's Leave Requests
                     </Link>
                   </ul>
                 </div>

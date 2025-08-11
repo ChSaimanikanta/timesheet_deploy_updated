@@ -43,6 +43,7 @@ function AdminApprovalPage() {
       for (let empId in datasOfTimesheet) {
         const adminData = datasOfTimesheet[empId];
         const workingHours = adminData.workingHours;
+        const firstName = workingHours[0]?.firstName || "N/A";
 
         // Fetch startDate and endDate
         const startDate = workingHours[0].date;
@@ -51,7 +52,7 @@ function AdminApprovalPage() {
         const adminId = adminData.employeeId;
         timehseetData = [
           ...timehseetData,
-          { adminId, startDate, endDate, totalHours, checked: false },
+          { adminId,firstName, startDate, endDate, totalHours, checked: false },
         ];
       }
 
@@ -234,6 +235,7 @@ function AdminApprovalPage() {
                     <span className="d-inline-block">Select</span>
                   </th>
                   <th>Supervisor Id</th>
+                  <th>FirstName</th>
                   <th>Start Date</th>
                   <th>End Date</th>
                   <th>No hrs Submitted</th>
@@ -252,6 +254,7 @@ function AdminApprovalPage() {
                       />
                     </td>
                     <td>{sheet.adminId}</td>
+                    <td>{sheet.firstName}</td>
                     <td>{sheet.startDate}</td>
                     <td>{sheet.endDate}</td>
                     <td>{sheet.totalHours}</td>

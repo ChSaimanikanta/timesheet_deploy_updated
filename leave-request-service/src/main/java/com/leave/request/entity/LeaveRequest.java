@@ -25,6 +25,8 @@ public class LeaveRequest {
     private Long id;
     
     private String employeeId;
+    
+    private String firstName;
     private LocalDate startDate;
     private LocalDate endDate;
     private int noOfDays;

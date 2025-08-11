@@ -18,6 +18,7 @@ public class WorkingHour {
 	    @GeneratedValue(strategy = GenerationType.IDENTITY)
 	    private Long id;
 	    private String employeeId;
+	    private String firstName;
 	    private String projectId;
 	    private LocalDate date;
 	    private int hours;

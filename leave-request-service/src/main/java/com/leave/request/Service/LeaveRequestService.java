@@ -10,7 +10,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.leave.request.client.EmployeeClient;
 import com.leave.request.client.ProjectServiceClient;
+import com.leave.request.entity.Employee;
 import com.leave.request.entity.LeaveRequest;
 import com.leave.request.entity.ProjectResponse;
 import com.leave.request.repo.LeaveRequestRepository;
@@ -26,9 +28,23 @@ public class LeaveRequestService {
     @Autowired
     private ProjectServiceClient projectServiceClient;
 
+    @Autowired
+    private EmployeeClient employeeClient;
+    
     public LeaveRequest createLeaveRequest(LeaveRequest leaveRequest) {
         if (leaveRequest.getStartDate().isBefore(LocalDate.now())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Start date must be today or in the future.");
+        }
+
+        // 🔍 Fetch employee name using Feign client
+        try {
+            Employee employee = employeeClient.getEmployeeById(leaveRequest.getEmployeeId());
+            System.out.println("✅ Found employee: " + employee.getFirstName());
+            leaveRequest.setFirstName(employee.getFirstName());
+        } catch (Exception e) {
+            System.out.println("❌ Failed to fetch employee: " + leaveRequest.getEmployeeId());
+            // Optional: You can choose to throw an error or continue without the name
+            // throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Employee not found.");
         }
 
         List<ProjectResponse> projects;
@@ -41,7 +57,6 @@ public class LeaveRequestService {
             }
 
         } catch (FeignException.InternalServerError e) {
-            // Improve error clarity by inspecting root cause if possible
             throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
                 "Your EmployeeId is not mapped to any project. Cannot proceed with leave request.");
         } catch (FeignException e) {

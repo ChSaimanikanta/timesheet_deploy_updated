@@ -233,6 +233,7 @@ function SupervisorLeaveApproval() {
                       Select{" "}
                     </th>
                     <th>Emp Id</th>
+                    <th>Name</th>
                     <th>Leave Type</th>
                     <th>Start Date</th>
                     <th>End Date</th>
@@ -254,6 +255,7 @@ function SupervisorLeaveApproval() {
                             ></input>
                           </td>
                           <td>{sheet.employeeId}</td>
+                          <td>{sheet.firstName}</td>
                           <td>{sheet.reason}</td>
                           <td>{sheet.startDate}</td>
                           <td>{sheet.endDate}</td>

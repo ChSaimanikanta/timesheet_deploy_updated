@@ -10,6 +10,8 @@ import java.util.HashMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.timesheet.supervisor.client.EmployeeClient;
+import com.timesheet.supervisor.entity.Employee;
 import com.timesheet.supervisor.entity.EmployeeWorkingHours;
 import com.timesheet.supervisor.entity.ProjectWorkingHours;
 import com.timesheet.supervisor.entity.WorkingHour;
@@ -25,21 +27,33 @@ public class WorkingHourService {
 	    @Autowired
 	    private WorkingHourRepository workingHourRepository;
 
+	    @Autowired
+	    private EmployeeClient employeeClient; // Inject the employee client
+
 	    public List<WorkingHour> saveWorkingHours(List<WorkingHour> workingHours) {
 	        List<WorkingHour> updatedWorkingHours = new ArrayList<>();
 
 	        for (WorkingHour workingHour : workingHours) {
+	            // 🔍 Fetch and set firstName from employee service
+	            try {
+	                Employee employee = employeeClient.getEmployeeById(workingHour.getEmployeeId());
+	                System.out.println("✅ Found employee: " + employee.getFirstName());
+	                workingHour.setFirstName(employee.getFirstName());
+	            } catch (Exception e) {
+	                System.out.println("❌ Failed to fetch employee: " + workingHour.getEmployeeId());
+	            }
+
 	            Optional<WorkingHour> existingRecord = workingHourRepository.findByEmployeeIdAndProjectIdAndDate(
 	                workingHour.getEmployeeId(), workingHour.getProjectId(), workingHour.getDate()
 	            );
 
 	            if (existingRecord.isPresent()) {
 	                WorkingHour updatedEntry = existingRecord.get();
+	                updatedEntry.setFirstName(workingHour.getFirstName()); // 👈 Set firstName
 	                updatedEntry.setHours(workingHour.getHours());
 	                updatedEntry.setStatus(workingHour.getStatus() != null ? workingHour.getStatus() : updatedEntry.getStatus());
 	                updatedEntry.setRejectionReason(workingHour.getRejectionReason());
 
-	                // Reset status if necessary
 	                boolean hoursChanged = updatedEntry.getHours() != workingHour.getHours();
 	                boolean rejectionRemoved = updatedEntry.getRejectionReason() != null && workingHour.getRejectionReason() == null;
 
@@ -53,9 +67,10 @@ public class WorkingHourService {
 	                updatedWorkingHours.add(workingHour);
 	            }
 	        }
-	        
+
 	        return workingHourRepository.saveAll(updatedWorkingHours);
 	    }
+	
 
 
 	    public List<WorkingHour> getWorkingHoursByEmployeeId(String employeeId) {

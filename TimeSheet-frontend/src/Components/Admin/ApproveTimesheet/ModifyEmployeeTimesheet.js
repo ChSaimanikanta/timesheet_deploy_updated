@@ -31,7 +31,7 @@ function ModifySupervisorTimesheet() {
   const [editableData, setEditableData] = useState([]);
   const [workHourError, setWorkHourError] = useState("");
   let [totalWorkHours, setTotalWorkHours] = useState(0);
-
+ const [employeeName, setEmployeeName] = useState("");
   const [editApproveConfirmationModal, setEditApproveConfirmationModal] =
     useState(false);
   const [editRejectConfirmationModal, setEditRejectConfirmationModal] =
@@ -64,8 +64,8 @@ function ModifySupervisorTimesheet() {
       await Promise.all(
         editableData.map(async () => {
           let response = await axios.put(
-            `${serverUrl}/admin/working-hours/update` ,editableData
-            
+            `${serverUrl}/admin/working-hours/update`, editableData
+
           );
         })
       );
@@ -160,13 +160,22 @@ function ModifySupervisorTimesheet() {
   }, [timesheetData]);
 
   async function getEditTimesheet() {
-    const response = await axios.get(
-      `${serverUrl}/admin/working-hours/${id}/range?startDate=${startDate}&endDate=${endDate}`
-    );
-    const datas = response.data;
-    console.log(datas);
-    setTimesheetData(datas);
-    setEditableData(datas);
+    try {
+      const response = await axios.get(
+        `${serverUrl}/admin/working-hours/${id}/range?startDate=${startDate}&endDate=${endDate}`
+      );
+      const datas = response.data;
+      console.log(datas);
+      setTimesheetData(datas);
+      setEditableData(datas);
+
+      // Extract firstName from the first entry
+      if (datas.length > 0 && datas[0].firstName) {
+        setEmployeeName(datas[0].firstName);
+      }
+    } catch (error) {
+      console.error("Error fetching timesheet data:", error);
+    }
   }
 
   useEffect(() => {
@@ -315,10 +324,13 @@ function ModifySupervisorTimesheet() {
 
             <div className="d-flex justify-content-between align-items-center">
               <div className="d-flex align-items-center m-1">
-                <label htmlFor="emp_id" className="mr-2 text-nowrap" style={{fontWeight: "bold" }}>Supervisor Id :</label>
+                <label htmlFor="emp_id" className="mr-2 text-nowrap" style={{ fontWeight: "bold" }}>Supervisor Id :</label>
                 <input type="text" id="emp_id" className="form-control mx-2" value={id} readOnly />
               </div>
-
+              <div className="d-flex align-items-center m-1">
+                <label htmlFor="emp_name" className="mr-2 text-nowrap" style={{ fontWeight: "bold" }}>Name :</label>
+                <input type="text" id="emp_name" className="form-control mx-2" value={employeeName} readOnly />
+              </div>
               <div className="d-flex align-items-center m-1">
                 <label htmlFor="fromDate" className="mr-2 text-nowrap" style={{ fontWeight: "bold" }}>Start Date :</label>
                 <input type="text" id="fromDate" className="form-control mx-2" value={startDate} readOnly />

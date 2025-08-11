@@ -9,7 +9,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.timesheet.supervisor.entity.LeaveRequest;
+import com.timesheet.supervisor.entity.Supervisor;
 import com.timesheet.supervisor.repo.LeaveRequestRepository;
+import com.timesheet.supervisor.repo.SupervisorRepository;
 
 
 
@@ -19,14 +21,23 @@ public class SupervisorLeaveRequestService {
     
     @Autowired
     private LeaveRequestRepository leaveRequestRepository;
-
+    @Autowired
+    private SupervisorRepository supervisorRepository;
     public LeaveRequest createLeaveRequest(LeaveRequest leaveRequest) {
         if (leaveRequest.getStartDate().isBefore(LocalDate.now())) {
             throw new IllegalArgumentException("Start date must be today or in the future.");
         }
+
+        // Fetch supervisor's name
+        Supervisor supervisor = supervisorRepository.findBySupervisorId(leaveRequest.getSupervisorId())
+            .orElseThrow(() -> new IllegalArgumentException("Supervisor not found"));
+
+        leaveRequest.setFirstName(supervisor.getFirstName());
         leaveRequest.setStatus("PENDING");
+
         return leaveRequestRepository.save(leaveRequest);
     }
+
 
     public LeaveRequest updateLeaveRequest(Long id, LeaveRequest leaveRequest) {
         Optional<LeaveRequest> existingRequest = leaveRequestRepository.findById(id);

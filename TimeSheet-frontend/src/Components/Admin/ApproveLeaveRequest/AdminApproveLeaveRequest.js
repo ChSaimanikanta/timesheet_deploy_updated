@@ -207,8 +207,8 @@ function AdminApproveLeaveRequest() {
       <div className="ti-background-clr">
         {leaveDatas.length > 0 ? (
           <Container>
-            <div className="py-3 ">
-              <p className=" text-center spr-approval-title ">Leave List</p>
+            <div className="py-3">
+              <p className="text-center spr-approval-title text-white">Supervisor's Leave List</p>
             </div>
             {/* without select timesheet error  */}
             {errorMessage && (
@@ -232,6 +232,7 @@ function AdminApproveLeaveRequest() {
                       Select{" "}
                     </th>
                     <th>Supervisor Id</th>
+                    <th>Name</th>
                     <th>Leave Type</th>
                     <th>Start Date</th>
                     <th>End Date</th>
@@ -243,23 +244,24 @@ function AdminApproveLeaveRequest() {
                   {/* table body */}
                   {leaveDatas
                     ? leaveDatas.map((sheet) => (
-                        <tr key={sheet.id} className="text-center">
-                          <td>
-                            <input
-                              type="checkbox"
-                              name="approvalchkLeave"
-                              checked={sheet.checked}
-                              onChange={() => handleCheckboxChange(sheet.id)}
-                            ></input>
-                          </td>
-                          <td>{sheet.supervisorId}</td>
-                          <td>{sheet.reason}</td>
-                          <td>{sheet.startDate}</td>
-                          <td>{sheet.endDate}</td>
-                          <td>{sheet.noOfDays}</td>
-                          <td>{sheet.comments}</td>
-                        </tr>
-                      ))
+                      <tr key={sheet.id} className="text-center">
+                        <td>
+                          <input
+                            type="checkbox"
+                            name="approvalchkLeave"
+                            checked={sheet.checked}
+                            onChange={() => handleCheckboxChange(sheet.id)}
+                          ></input>
+                        </td>
+                        <td>{sheet.supervisorId}</td>
+                        <td>{sheet.firstName}</td>
+                        <td>{sheet.reason}</td>
+                        <td>{sheet.startDate}</td>
+                        <td>{sheet.endDate}</td>
+                        <td>{sheet.noOfDays}</td>
+                        <td>{sheet.comments}</td>
+                      </tr>
+                    ))
                     : ""}
                 </tbody>
               </table>
