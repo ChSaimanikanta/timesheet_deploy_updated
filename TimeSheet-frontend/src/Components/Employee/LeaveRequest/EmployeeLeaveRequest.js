@@ -114,23 +114,27 @@ const [errorMessage, setErrorMessage] = useState("");
   });
 
   useEffect(() => {
-    if (formik.values.startDate && formik.values.endDate) {
-      const start = new Date(formik.values.startDate);
-      const end = new Date(formik.values.endDate);
-      let days = 0;
-  
-      // Loop through each date in the range and count only non-Saturdays and non-Sundays
-      for (let d = start; d <= end; d.setDate(d.getDate() + 1)) {
-        if (d.getDay() !== 0 && d.getDay() !== 6) { // Exclude Sundays (0) and Saturdays (6)
-          days++;
-        }
+  if (formik.values.startDate && formik.values.endDate) {
+    const start = new Date(formik.values.startDate);
+    const end = new Date(formik.values.endDate);
+    let days = 0;
+
+    // Clone the start date to avoid mutating it
+    let current = new Date(start);
+
+    // Loop through each date in the range and count only non-Sundays
+    while (current <= end) {
+      if (current.getDay() !== 0) { // Exclude Sundays (0)
+        days++;
       }
-  
-      setNumberOfDays(days);
-      formik.setFieldValue("noOfDays", days);
+      current.setDate(current.getDate() + 1);
     }
-  }, [formik.values.startDate, formik.values.endDate]);
-  
+
+    setNumberOfDays(days);
+    formik.setFieldValue("noOfDays", days);
+  }
+}, [formik.values.startDate, formik.values.endDate]);
+
   
   return (
     <>

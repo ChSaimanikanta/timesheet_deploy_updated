@@ -18,7 +18,7 @@ function EmployeeEditLeaveRequest() {
   const [confirmationModal, setConfirmationModal] = useState(false);
   const [successModal, setSuccessModal] = useState(false);
   const navigate = useNavigate();
-const [numberOfDays, setNumberOfDays] = useState(0);
+  const [numberOfDays, setNumberOfDays] = useState(0);
   const employeeValue = useSelector((state) => state.employeeLogin.value);
   const employeeId = employeeValue.employeeId;
 
@@ -71,25 +71,47 @@ const [numberOfDays, setNumberOfDays] = useState(0);
     fetchLeaveData();
   }, []);
 
+  // useEffect(() => {
+  //   if (formik.values.startDate && formik.values.endDate) {
+  //     const start = new Date(formik.values.startDate);
+  //     const end = new Date(formik.values.endDate);
+  //     let days = 0;
+
+  //     // Loop through each date in the range and count only non-Saturdays and non-Sundays
+  //     for (let d = start; d <= end; d.setDate(d.getDate() + 1)) {
+  //       if (d.getDay() !== 0 && d.getDay() !== 6) { // Exclude Sundays (0) and Saturdays (6)
+  //         days++;
+  //       }
+  //     }
+
+  //     setNumberOfDays(days);
+  //     formik.setFieldValue("noOfDays", days);
+  //   }
+  // }, [formik.values.startDate, formik.values.endDate]);
+
   useEffect(() => {
     if (formik.values.startDate && formik.values.endDate) {
       const start = new Date(formik.values.startDate);
       const end = new Date(formik.values.endDate);
       let days = 0;
-  
-      // Loop through each date in the range and count only non-Saturdays and non-Sundays
-      for (let d = start; d <= end; d.setDate(d.getDate() + 1)) {
-        if (d.getDay() !== 0 && d.getDay() !== 6) { // Exclude Sundays (0) and Saturdays (6)
+
+      // Clone the start date to avoid mutating it
+      let current = new Date(start);
+
+      // Loop through each date in the range and count only non-Sundays
+      while (current <= end) {
+        if (current.getDay() !== 0) { // Exclude Sundays (0)
           days++;
         }
+        current.setDate(current.getDate() + 1);
       }
-  
+
       setNumberOfDays(days);
       formik.setFieldValue("noOfDays", days);
     }
   }, [formik.values.startDate, formik.values.endDate]);
-  
-    
+
+
   async function editLeaveRequest() {
     setConfirmationModal(false);
     try {
@@ -113,7 +135,7 @@ const [numberOfDays, setNumberOfDays] = useState(0);
     <>
       <div className="container-fluid ti-background-clr px-3">
         {lastLeaveRequestData &&
-        Object.keys(lastLeaveRequestData).length > 0 ? (
+          Object.keys(lastLeaveRequestData).length > 0 ? (
           <div className="ti-leave-management-container">
             <div className="bg-white p-5 m-5">
               <h5 className="text-center pt-4 text-primary">
@@ -196,7 +218,7 @@ const [numberOfDays, setNumberOfDays] = useState(0);
                     {/* Reason Dropdown */}
                     <div className="mb-3">
                       <label>Reason:
-                        <span className="text-danger">*</span> 
+                        <span className="text-danger">*</span>
                       </label>
                       <select
                         className="form-control"
@@ -222,7 +244,7 @@ const [numberOfDays, setNumberOfDays] = useState(0);
                     {/* Comments */}
                     <div className="mb-3">
                       <label>Comments:
-                        <span className="text-danger">*</span> 
+                        <span className="text-danger">*</span>
                       </label>
                       <textarea
                         className="form-control"
@@ -262,8 +284,8 @@ const [numberOfDays, setNumberOfDays] = useState(0);
           </div>
         ) : (
           <div className="text-center py-5">
-            <h3 style={{color:"white"}}>No Leave Request Available</h3>
-            <p style={{color:"white"}}>Please create a new one.</p>
+            <h3 style={{ color: "white" }}>No Leave Request Available</h3>
+            <p style={{ color: "white" }}>Please create a new one.</p>
             <button
               className="btn btn-secondary"
               onClick={() => navigate("/employee")}
