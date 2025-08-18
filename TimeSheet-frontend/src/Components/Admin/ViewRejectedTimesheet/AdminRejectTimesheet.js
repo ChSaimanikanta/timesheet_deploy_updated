@@ -52,60 +52,73 @@ useEffect(() => {
     }
 
     try {
-      let today = new Date();
-      let startDate, endDate;
+      const today = new Date();
 
-      // ✅ Ensure correct timesheet period logic
-      if (today.getDate() <= 15) {
-        startDate = new Date(today.getFullYear(), today.getMonth(), 1);
-        endDate = new Date(today.getFullYear(), today.getMonth(), 15);
-      } else {
-        startDate = new Date(today.getFullYear(), today.getMonth(), 16);
-        endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      // Define both halves of the current month
+      const firstHalfStart = new Date(today.getFullYear(), today.getMonth(), 1);
+      const firstHalfEnd = new Date(today.getFullYear(), today.getMonth(), 15, 23, 59, 59, 999);
+
+      const secondHalfStart = new Date(today.getFullYear(), today.getMonth(), 16);
+      const secondHalfEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59, 999);
+
+      const formatDate = (date) => date.toLocaleDateString("en-CA");
+
+      const ranges = [
+        {
+          label: "First Half",
+          startDate: formatDate(firstHalfStart),
+          endDate: formatDate(firstHalfEnd),
+        },
+        {
+          label: "Second Half",
+          startDate: formatDate(secondHalfStart),
+          endDate: formatDate(secondHalfEnd),
+        },
+      ];
+
+      let foundRejectedData = null;
+
+      for (const range of ranges) {
+        const response = await axios.get(
+          `${serverUrl}/working-hours/${adminId}/range`,
+          {
+            params: {
+              startDate: range.startDate,
+              endDate: range.endDate,
+            },
+          }
+        );
+
+        const datas = response.data;
+
+        if (datas.length > 0 && datas[0].status === "REJECTED") {
+          foundRejectedData = datas;
+          break;
+        }
       }
 
-      // ✅ Prevent timezone shifts
-      startDate.setHours(0, 0, 0, 0);
-      endDate.setHours(23, 59, 59, 999);
-
-      // ✅ Use `toLocaleDateString('en-CA')` to maintain consistent formatting
-      let formattedStartDate = startDate.toLocaleDateString("en-CA");
-      let formattedEndDate = endDate.toLocaleDateString("en-CA");
-
-      console.log("Fetching rejected timesheet:", formattedStartDate, "to", formattedEndDate);
-
-      const response = await axios.get(
-        `${serverUrl}/working-hours/${adminId}/range?startDate=${formattedStartDate}&endDate=${formattedEndDate}`
-      );
-
-      const datas = response.data;
-
-      if (datas.length > 0) {
-        let firstEntry = datas[0];
-        let lastEntry = datas[datas.length - 1];
+      if (foundRejectedData) {
+        const sortedData = foundRejectedData.sort((a, b) => new Date(a.date) - new Date(b.date));
+        const firstEntry = sortedData[0];
+        const lastEntry = sortedData[sortedData.length - 1];
 
         setStartSubmitDate(firstEntry.date);
         setEndSubmitDate(lastEntry.date);
         setSubmitAdminId(firstEntry.employeeId);
         setSubmitTimesheetStatus(firstEntry.status);
 
-        // ✅ Ensure rejection handling logic is correct
-        if (firstEntry.status === "REJECTED") {
-          const updatedData = datas.map((data) => ({
-            ...data,
-            rejectionReason: data.rejectionReason || "",
-            status: "NEW",
-          }));
+        const updatedData = sortedData.map((entry) => ({
+          ...entry,
+          rejectionReason: entry.rejectionReason || "",
+          status: "NEW",
+        }));
 
-          setTimesheetData(updatedData);
-          setEditableData(updatedData);
-          setViewRejectReason(firstEntry.rejectionReason || "");
-          dispatch(submitAdminOFF(false));
-        } else {
-          dispatch(submitAdminON(true));
-        }
+        setTimesheetData(updatedData);
+        setEditableData(updatedData);
+        setViewRejectReason(firstEntry.rejectionReason || "No reason provided");
+        dispatch(submitAdminOFF(false));
       } else {
-        setSubmitTimesheetStatus("No Data Submitted");
+        setSubmitTimesheetStatus("No Rejected Timesheet Found");
       }
     } catch (error) {
       console.error("Error fetching rejected timesheet data:", error);
@@ -114,6 +127,7 @@ useEffect(() => {
 
   getRejectTimesheet();
 }, [adminId, serverUrl, dispatch]);
+
 
 
   // console.log(timesheetData);

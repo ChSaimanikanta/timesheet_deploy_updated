@@ -33,57 +33,87 @@ function EmployeeHome() {
   const [showModal, setShowModal] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
   // Fetch timesheet submission data dynamically
-  useEffect(() => {
-    async function fetchTimesheetData() {
-      if (!employeeId) return;
+useEffect(() => {
+  async function fetchTimesheetData() {
+    if (!employeeId) {
+      console.warn("Employee ID is missing.");
+      return;
+    }
 
+    const today = new Date();
+
+    // Define both halves of the current month
+    const firstHalfStart = new Date(today.getFullYear(), today.getMonth(), 1);
+    const firstHalfEnd = new Date(today.getFullYear(), today.getMonth(), 15, 23, 59, 59, 999);
+
+    const secondHalfStart = new Date(today.getFullYear(), today.getMonth(), 16);
+    const secondHalfEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59, 999);
+
+    const formatDate = (date) => date.toLocaleDateString("en-CA");
+
+    const ranges = [
+      {
+        label: "Second Half",
+        startDate: formatDate(secondHalfStart),
+        endDate: formatDate(secondHalfEnd),
+      },
+      {
+        label: "First Half",
+        startDate: formatDate(firstHalfStart),
+        endDate: formatDate(firstHalfEnd),
+      },
+    ];
+
+    let foundData = null;
+
+    for (const range of ranges) {
       try {
-        const response = await axios.get(`${serverUrl}/workinghours/employee/${employeeId}/new`);
-        const submittedEntries = response.data.flat();
-
-        let firstHalf = submittedEntries.filter(entry => {
-          const day = new Date(entry.date).getDate();
-          return day >= 1 && day <= 15;
-        });
-
-        let secondHalf = submittedEntries.filter(entry => {
-          const day = new Date(entry.date).getDate();
-          return day >= 16;
-        });
-
-        let timesheetToShow = [];
-
-        if (secondHalf.length > 0) {
-          timesheetToShow = secondHalf;
-        } else if (firstHalf.length > 0) {
-          timesheetToShow = firstHalf;
-        }
-
-        if (timesheetToShow.length > 0) {
-          const sortedData = timesheetToShow.sort((a, b) => new Date(a.date) - new Date(b.date));
-          const firstDate = sortedData[0].date;
-          const lastDate = sortedData[sortedData.length - 1].date;
-
-          setStartSubmitDate(firstDate);
-          setEndSubmitDate(lastDate);
-          setSubmitEmployeeId(sortedData[0].employeeId);
-          setStatusValue(sortedData[0].status);
-
-          if (sortedData[0].status === "APPROVED" || sortedData[0].status === "REJECTED") {
-            dispatch(submitOFF(false));
-          } else {
-            dispatch(submitON(true));
+        const response = await axios.get(
+          `${serverUrl}/workinghours/employee/${employeeId}/range`,
+          {
+            params: {
+              startDate: range.startDate,
+              endDate: range.endDate,
+            },
           }
-        } else {
-          setStatusValue("No Data Submitted");
+        );
+
+        if (response.data && response.data.length > 0) {
+          foundData = {
+            data: response.data,
+            label: range.label,
+          };
+          break;
         }
       } catch (error) {
-        console.error("Error fetching timesheet data:", error);
+        console.error(`Error fetching ${range.label} timesheet:`, error);
       }
     }
 
-    fetchTimesheetData();
-  }, [employeeId]);
+    if (foundData) {
+      const sortedData = foundData.data.sort((a, b) => new Date(a.date) - new Date(b.date));
+      const firstDate = sortedData[0].date;
+      const lastDate = sortedData[sortedData.length - 1].date;
+
+      setStartSubmitDate(firstDate);
+      setEndSubmitDate(lastDate);
+      setSubmitEmployeeId(sortedData[0].employeeId);
+      setStatusValue(sortedData[0].status);
+
+      const status = sortedData[0].status;
+      if (status === "APPROVED" || status === "REJECTED") {
+        dispatch(submitOFF(false));
+      } else {
+        dispatch(submitON(true));
+      }
+    } else {
+      setStatusValue("No Data Submitted");
+    }
+  }
+
+  fetchTimesheetData();
+}, [employeeId, dispatch, serverUrl]);
+
 
   async function leaveStatus() {
     let response = await axios.get(

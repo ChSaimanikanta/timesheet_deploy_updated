@@ -34,65 +34,85 @@ function SupervisorHome() {
 
 useEffect(() => {
   async function fetchTimesheetData() {
-    if (!supervisorId) return;
+    if (!supervisorId) {
+      console.warn("Supervisor ID is missing.");
+      return;
+    }
 
-    try {
-      const today = new Date();
+    const today = new Date();
 
-      // 🎯 Define date boundaries for timesheet period
-      const startDate =
-        today.getDate() <= 15
-          ? new Date(today.getFullYear(), today.getMonth(), 1)
-          : new Date(today.getFullYear(), today.getMonth(), 16);
-      const endDate =
-        today.getDate() <= 15
-          ? new Date(today.getFullYear(), today.getMonth(), 15)
-          : new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    // Define both halves of the current month
+    const firstHalfStart = new Date(today.getFullYear(), today.getMonth(), 1);
+    const firstHalfEnd = new Date(today.getFullYear(), today.getMonth(), 15, 23, 59, 59, 999);
 
-      // ⏰ Ensure endDate includes the full day
-      endDate.setHours(23, 59, 59, 999);
+    const secondHalfStart = new Date(today.getFullYear(), today.getMonth(), 16);
+    const secondHalfEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59, 999);
 
-      // 📅 Format dates to 'YYYY-MM-DD'
-      const formattedStartDate = startDate.toLocaleDateString('en-CA');
-      const formattedEndDate = endDate.toLocaleDateString('en-CA');
+    const formatDate = (date) => date.toLocaleDateString("en-CA");
 
-      const response = await axios.get(
-        `${serverUrl}/sup/api/working-hours/${supervisorId}/range?startDate=${formattedStartDate}&endDate=${formattedEndDate}`
-      );
+    const ranges = [
+      {
+        label: "Second Half",
+        startDate: formatDate(secondHalfStart),
+        endDate: formatDate(secondHalfEnd),
+      },
+      {
+        label: "First Half",
+        startDate: formatDate(firstHalfStart),
+        endDate: formatDate(firstHalfEnd),
+      },
+    ];
 
-      const entries = response.data;
+    let foundData = null;
 
-      // 🧹 Filter and sort entries
-      if (entries?.length > 0) {
-        const sortedData = entries.sort(
-          (a, b) => new Date(a.date) - new Date(b.date)
+    for (const range of ranges) {
+      try {
+        const response = await axios.get(
+          `${serverUrl}/sup/api/working-hours/${supervisorId}/range`,
+          {
+            params: {
+              startDate: range.startDate,
+              endDate: range.endDate,
+            },
+          }
         );
 
-        const firstDate = sortedData[0].date;
-        const lastDate = sortedData[sortedData.length - 1].date;
-
-        setStartSubmitDate(firstDate);
-        setEndSubmitDate(lastDate);
-        setSubmitSupervisorId(sortedData[0].employeeId);
-        setStatusValue(sortedData[0].status);
-
-        // 🔄 Dispatch based on status
-        const status = sortedData[0].status;
-        if (status === 'APPROVED' || status === 'REJECTED') {
-          dispatch(submitOFF(false));
-        } else {
-          dispatch(submitON(true));
+        if (response.data && response.data.length > 0) {
+          foundData = {
+            data: response.data,
+            label: range.label,
+          };
+          break;
         }
-      } else {
-        setStatusValue('No Data Submitted');
+      } catch (error) {
+        console.error(`Error fetching ${range.label} timesheet:`, error);
       }
-    } catch (error) {
-      console.error('Error fetching timesheet data:', error);
+    }
+
+    if (foundData) {
+      const sortedData = foundData.data.sort((a, b) => new Date(a.date) - new Date(b.date));
+      const firstDate = sortedData[0].date;
+      const lastDate = sortedData[sortedData.length - 1].date;
+
+      setStartSubmitDate(firstDate);
+      setEndSubmitDate(lastDate);
+      setSubmitSupervisorId(sortedData[0].employeeId);
+      setStatusValue(sortedData[0].status);
+
+      const status = sortedData[0].status;
+      if (status === "APPROVED" || status === "REJECTED") {
+        dispatch(submitOFF(false));
+      } else {
+        dispatch(submitON(true));
+      }
+    } else {
+      setStatusValue("No Data Submitted");
     }
   }
 
   fetchTimesheetData();
-}, [supervisorId]);
+}, [supervisorId, dispatch, serverUrl]);
+
 
 
   console.log(startSubmitDate);

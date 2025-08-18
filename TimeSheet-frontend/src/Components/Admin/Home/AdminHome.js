@@ -46,64 +46,80 @@ useEffect(() => {
       return;
     }
 
-    let today = new Date();
-    let startDate, endDate;
+    const today = new Date();
 
-    // ✅ Determine correct timesheet period
-    if (today.getDate() <= 15) {
-      startDate = new Date(today.getFullYear(), today.getMonth(), 1); // First half (1st to 15th)
-      endDate = new Date(today.getFullYear(), today.getMonth(), 15);
-    } else {
-      startDate = new Date(today.getFullYear(), today.getMonth(), 16); // Second half (16th to last day)
-      endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    // Define both halves of the current month
+    const firstHalfStart = new Date(today.getFullYear(), today.getMonth(), 1);
+    const firstHalfEnd = new Date(today.getFullYear(), today.getMonth(), 15, 23, 59, 59, 999);
+
+    const secondHalfStart = new Date(today.getFullYear(), today.getMonth(), 16);
+    const secondHalfEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59, 999);
+
+    // Format dates to YYYY-MM-DD
+    const formatDate = (date) => date.toLocaleDateString("en-CA");
+
+    const formattedRanges = [
+      {
+        label: "Second Half",
+        startDate: formatDate(secondHalfStart),
+        endDate: formatDate(secondHalfEnd),
+      },
+      {
+        label: "First Half",
+        startDate: formatDate(firstHalfStart),
+        endDate: formatDate(firstHalfEnd),
+      },
+    ];
+
+    let foundData = null;
+
+    // Try fetching second half first, then fallback to first half
+    for (const range of formattedRanges) {
+      try {
+        const response = await axios.get(
+          `${serverUrl}/working-hours/${adminId}/range`,
+          {
+            params: {
+              startDate: range.startDate,
+              endDate: range.endDate,
+            },
+          }
+        );
+
+        if (response.data && response.data.length > 0) {
+          foundData = {
+            data: response.data,
+            label: range.label,
+          };
+          break; // Stop after finding valid data
+        }
+      } catch (error) {
+        console.error(`Error fetching ${range.label} timesheet:`, error);
+      }
     }
 
-    // ✅ Ensure endDate covers the entire day
-    endDate.setHours(23, 59, 59, 999);
+    if (foundData) {
+      const sortedData = foundData.data.sort((a, b) => new Date(a.date) - new Date(b.date));
+      const firstDate = sortedData[0].date;
+      const lastDate = sortedData[sortedData.length - 1].date;
 
-    // ✅ Format dates correctly to prevent timezone shifts
-    let formattedStartDate = startDate.toLocaleDateString('en-CA'); // Correct format YYYY-MM-DD
-    let formattedEndDate = endDate.toLocaleDateString('en-CA');
+      setStartSubmitDate(firstDate);
+      setEndSubmitDate(lastDate);
+      setSubmitAdminId(sortedData[0].employeeId);
+      setStatusValue(sortedData[0].status);
 
-    console.log("Fetching timesheet:", formattedStartDate, "to", formattedEndDate);
-
-    try {
-      let response = await axios.get(
-        `${serverUrl}/working-hours/${adminId}/range?startDate=${formattedStartDate}&endDate=${formattedEndDate}`
-      );
-
-      let data = response.data;
-
-      console.log("API Response:", data);
-
-      if (data.length > 0) {
-        // ✅ Sort data to ensure correct start and end dates
-        let sortedData = data.sort((a, b) => new Date(a.date) - new Date(b.date));
-
-        let firstDate = sortedData[0].date;  // ✅ First entry in sorted data
-        let lastDate = sortedData[sortedData.length - 1].date;  // ✅ Last entry in sorted data
-
-        setStartSubmitDate(firstDate);
-        setEndSubmitDate(lastDate);
-        setSubmitAdminId(sortedData[0].employeeId);
-        setStatusValue(sortedData[0].status);
-
-        // ✅ Update submission status dynamically
-        if (sortedData[0].status === "APPROVED" || sortedData[0].status === "REJECTED") {
-          dispatch(submitAdminOFF(false));
-        } else {
-          dispatch(submitAdminON(true));
-        }
+      if (sortedData[0].status === "APPROVED" || sortedData[0].status === "REJECTED") {
+        dispatch(submitAdminOFF(false));
       } else {
-        setStatusValue("No Data Submitted");
+        dispatch(submitAdminON(true));
       }
-    } catch (error) {
-      console.error("Error fetching timesheet data:", error);
+    } else {
+      setStatusValue("No Data Submitted");
     }
   }
 
   fetchTimesheetData();
-}, [adminId, dispatch, serverUrl, submitAdminON, submitAdminOFF]);
+}, [adminId, dispatch, serverUrl]);
 
 
   // Fetch leave requests

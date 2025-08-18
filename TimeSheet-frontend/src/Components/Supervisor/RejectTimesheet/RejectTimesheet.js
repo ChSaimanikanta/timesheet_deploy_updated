@@ -43,38 +43,60 @@ function RejectTimesheet() {
 
 useEffect(() => {
   async function getRejectTimesheet() {
-    if (!supervisorId) return;
+    if (!supervisorId) {
+      console.warn("Supervisor ID is missing.");
+      return;
+    }
 
     try {
-      // 🗓️ Define date range based on current day
       const today = new Date();
-      const currentYear = today.getFullYear();
-      const currentMonth = today.getMonth();
-      const isFirstHalf = today.getDate() <= 15;
 
-      const startDate = new Date(currentYear, currentMonth, isFirstHalf ? 1 : 16);
-      const endDate = isFirstHalf
-        ? new Date(currentYear, currentMonth, 15)
-        : new Date(currentYear, currentMonth + 1, 0);
+      // Define both halves of the current month
+      const firstHalfStart = new Date(today.getFullYear(), today.getMonth(), 1);
+      const firstHalfEnd = new Date(today.getFullYear(), today.getMonth(), 15, 23, 59, 59, 999);
 
-      // 🕒 Ensure timezone-safe boundaries
-      startDate.setHours(0, 0, 0, 0);
-      endDate.setHours(23, 59, 59, 999);
+      const secondHalfStart = new Date(today.getFullYear(), today.getMonth(), 16);
+      const secondHalfEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59, 999);
 
-      const formattedStart = startDate.toLocaleDateString('en-CA');
-      const formattedEnd = endDate.toLocaleDateString('en-CA');
+      const formatDate = (date) => date.toLocaleDateString("en-CA");
 
-      const response = await axios.get(
-        `${serverUrl}/sup/api/working-hours/${supervisorId}/range?startDate=${formattedStart}&endDate=${formattedEnd}`
-      );
+      const ranges = [
+        {
+          label: "First Half",
+          startDate: formatDate(firstHalfStart),
+          endDate: formatDate(firstHalfEnd),
+        },
+        {
+          label: "Second Half",
+          startDate: formatDate(secondHalfStart),
+          endDate: formatDate(secondHalfEnd),
+        },
+      ];
 
-      const submittedEntries = response.data.flat();
+      let foundRejectedData = null;
 
-      // 🎯 Filter rejected entries only
-      const rejectedEntries = submittedEntries.filter(entry => entry.status === "REJECTED");
+      for (const range of ranges) {
+        const response = await axios.get(
+          `${serverUrl}/sup/api/working-hours/${supervisorId}/range`,
+          {
+            params: {
+              startDate: range.startDate,
+              endDate: range.endDate,
+            },
+          }
+        );
 
-      if (rejectedEntries.length > 0) {
-        const sorted = rejectedEntries.sort((a, b) => new Date(a.date) - new Date(b.date));
+        const entries = response.data.flat();
+        const rejectedEntries = entries.filter(entry => entry.status === "REJECTED");
+
+        if (rejectedEntries.length > 0) {
+          foundRejectedData = rejectedEntries;
+          break;
+        }
+      }
+
+      if (foundRejectedData) {
+        const sorted = foundRejectedData.sort((a, b) => new Date(a.date) - new Date(b.date));
         const firstDate = sorted[0].date;
         const lastDate = sorted[sorted.length - 1].date;
 
@@ -82,7 +104,7 @@ useEffect(() => {
         setEndSubmitDate(lastDate);
         setSubmitEmployeeId(sorted[0].employeeId);
         setSubmitTimesheetStatus("REJECTED");
-        setViewRejectReason(sorted[0].rejectionReason || "");
+        setViewRejectReason(sorted[0].rejectionReason || "No reason provided");
 
         const updatedData = sorted.map(entry => ({
           ...entry,
@@ -102,7 +124,8 @@ useEffect(() => {
   }
 
   getRejectTimesheet();
-}, [supervisorId]);
+}, [supervisorId, dispatch, serverUrl]);
+
 
 
 
