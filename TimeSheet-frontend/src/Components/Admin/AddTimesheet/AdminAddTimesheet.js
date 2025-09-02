@@ -233,7 +233,7 @@ const AdminAddTimesheet = () => {
     }
   };
 
-   const isPastMonth = (selectedMonth) => {
+  const isPastMonth = (selectedMonth) => {
     const currentDate = new Date();
     const selectedDate = new Date(selectedMonth + "-01"); // Convert YYYY-MM to Date format
     return selectedDate < new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
@@ -242,14 +242,14 @@ const AdminAddTimesheet = () => {
     const date = new Date(selectedMonth + "-01"); // Convert YYYY-MM to Date
     return date.toLocaleString("en-US", { month: "long", year: "numeric" }); // "May 2025"
   };
-    const startMonth = new Date(new Date().getFullYear(), new Date().getMonth() - 2) // Allows selection up to exactly 3 months ago
+  const startMonth = new Date(new Date().getFullYear(), new Date().getMonth() - 2) // Allows selection up to exactly 3 months ago
     .toISOString()
     .slice(0, 7);
 
   const endMonth = new Date().toISOString().slice(0, 7); // Current month (latest allowed)
 
 
-   function calculateTotalWorkHours(selectedMonth) {
+  function calculateTotalWorkHours(selectedMonth) {
     let totalWorkHours = 0;
 
     projectRows.forEach((row) => {
@@ -266,7 +266,7 @@ const AdminAddTimesheet = () => {
     setTotal(totalWorkHours);
   }
 
- useEffect(() => {
+  useEffect(() => {
     calculateTotalWorkHours(selectedMonth);
   }, [selectedMonth, projectRows]);
 
@@ -718,16 +718,18 @@ const AdminAddTimesheet = () => {
                   style={{
                     width: "100px",
                     backgroundColor:
-                      isPastMonth(selectedMonth) || (submittedHalf.firstHalf && showFirstHalf) || (submittedHalf.secondHalf && !showFirstHalf)
+                      (submittedHalf.firstHalf && showFirstHalf) || (submittedHalf.secondHalf && !showFirstHalf)
                         ? "#808080"
                         : "#28a745",
                     color: "white",
                     cursor:
-                      isPastMonth(selectedMonth) || (submittedHalf.firstHalf && showFirstHalf) || (submittedHalf.secondHalf && !showFirstHalf)
+                      (submittedHalf.firstHalf && showFirstHalf) || (submittedHalf.secondHalf && !showFirstHalf)
                         ? "not-allowed"
                         : "pointer",
                   }}
-                  disabled={isPastMonth(selectedMonth) || (submittedHalf.firstHalf && showFirstHalf) || (submittedHalf.secondHalf && !showFirstHalf)}
+                  disabled={
+                    (submittedHalf.firstHalf && showFirstHalf) || (submittedHalf.secondHalf && !showFirstHalf)
+                  }
                 >
                   Submit
                 </button>

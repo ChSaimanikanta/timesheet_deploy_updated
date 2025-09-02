@@ -39,29 +39,35 @@ useEffect(() => {
       return;
     }
 
-    const today = new Date();
-
-    // Define both halves of the current month
-    const firstHalfStart = new Date(today.getFullYear(), today.getMonth(), 1);
-    const firstHalfEnd = new Date(today.getFullYear(), today.getMonth(), 15, 23, 59, 59, 999);
-
-    const secondHalfStart = new Date(today.getFullYear(), today.getMonth(), 16);
-    const secondHalfEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59, 999);
-
     const formatDate = (date) => date.toLocaleDateString("en-CA");
 
-    const ranges = [
-      {
-        label: "Second Half",
-        startDate: formatDate(secondHalfStart),
-        endDate: formatDate(secondHalfEnd),
-      },
-      {
-        label: "First Half",
-        startDate: formatDate(firstHalfStart),
-        endDate: formatDate(firstHalfEnd),
-      },
-    ];
+    const today = new Date();
+    const ranges = [];
+
+    // Check both halves of the last 3 months (you can increase this range if needed)
+    for (let i = 0; i < 3; i++) {
+      const monthDate = new Date(today.getFullYear(), today.getMonth() - i, 1);
+      const year = monthDate.getFullYear();
+      const month = monthDate.getMonth();
+
+      const firstHalfStart = new Date(year, month, 1);
+      const firstHalfEnd = new Date(year, month, 15, 23, 59, 59, 999);
+      const secondHalfStart = new Date(year, month, 16);
+      const secondHalfEnd = new Date(year, month + 1, 0, 23, 59, 59, 999);
+
+      ranges.push(
+        {
+          label: "Second Half",
+          startDate: formatDate(secondHalfStart),
+          endDate: formatDate(secondHalfEnd),
+        },
+        {
+          label: "First Half",
+          startDate: formatDate(firstHalfStart),
+          endDate: formatDate(firstHalfEnd),
+        }
+      );
+    }
 
     let foundData = null;
 
@@ -82,7 +88,7 @@ useEffect(() => {
             data: response.data,
             label: range.label,
           };
-          break;
+          break; // Stop at the first valid submission found
         }
       } catch (error) {
         console.error(`Error fetching ${range.label} timesheet:`, error);
@@ -112,7 +118,6 @@ useEffect(() => {
 
   fetchTimesheetData();
 }, [supervisorId, dispatch, serverUrl]);
-
 
 
   console.log(startSubmitDate);

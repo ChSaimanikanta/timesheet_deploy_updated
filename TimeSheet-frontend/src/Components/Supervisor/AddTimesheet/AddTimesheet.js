@@ -712,22 +712,24 @@ const AddTimesheet = () => {
                 >
                   Save
                 </button> */}
-                  <button
+                 <button
                   className="AddTimesheet btn m-3 w-5"
                   onClick={() => setAddDataSubmitConfirmation(true)}
                   style={{
                     width: "100px",
                     backgroundColor:
-                      isPastMonth(selectedMonth) || (submittedHalf.firstHalf && showFirstHalf) || (submittedHalf.secondHalf && !showFirstHalf)
+                      (submittedHalf.firstHalf && showFirstHalf) || (submittedHalf.secondHalf && !showFirstHalf)
                         ? "#808080"
                         : "#28a745",
                     color: "white",
                     cursor:
-                      isPastMonth(selectedMonth) || (submittedHalf.firstHalf && showFirstHalf) || (submittedHalf.secondHalf && !showFirstHalf)
+                      (submittedHalf.firstHalf && showFirstHalf) || (submittedHalf.secondHalf && !showFirstHalf)
                         ? "not-allowed"
                         : "pointer",
                   }}
-                  disabled={isPastMonth(selectedMonth) || (submittedHalf.firstHalf && showFirstHalf) || (submittedHalf.secondHalf && !showFirstHalf)}
+                  disabled={
+                    (submittedHalf.firstHalf && showFirstHalf) || (submittedHalf.secondHalf && !showFirstHalf)
+                  }
                 >
                   Submit
                 </button>

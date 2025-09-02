@@ -40,83 +40,57 @@ function AdminHome() {
 // Fetch timesheet submission data dynamically
 // Fetch timesheet submission data dynamically
 useEffect(() => {
-  async function fetchTimesheetData() {
-    if (!adminId) {
-      console.warn("Admin ID is missing.");
+async function fetchTimesheetData() {
+  if (!adminId) {
+    console.warn("Admin ID is missing.");
+    return;
+  }
+
+  try {
+    const response = await axios.get(`${serverUrl}/working-hours/${adminId}`);
+    const allData = response.data || [];
+
+    if (allData.length === 0) {
+      setStatusValue("No Data Submitted");
       return;
     }
 
-    const today = new Date();
+    // Sort by date descending to get the latest submission
+    const sortedData = allData.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-    // Define both halves of the current month
-    const firstHalfStart = new Date(today.getFullYear(), today.getMonth(), 1);
-    const firstHalfEnd = new Date(today.getFullYear(), today.getMonth(), 15, 23, 59, 59, 999);
+    const latestDate = sortedData[0].date;
+    const latestMonth = new Date(latestDate).getMonth();
+    const latestYear = new Date(latestDate).getFullYear();
 
-    const secondHalfStart = new Date(today.getFullYear(), today.getMonth(), 16);
-    const secondHalfEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59, 999);
+    // Filter only entries from the same half of that month
+    const isSecondHalf = new Date(latestDate).getDate() >= 16;
+    const filteredData = sortedData.filter((entry) => {
+      const entryDate = new Date(entry.date);
+      return (
+        entryDate.getMonth() === latestMonth &&
+        entryDate.getFullYear() === latestYear &&
+        (isSecondHalf ? entryDate.getDate() >= 16 : entryDate.getDate() <= 15)
+      );
+    });
 
-    // Format dates to YYYY-MM-DD
-    const formatDate = (date) => date.toLocaleDateString("en-CA");
+    const firstDate = filteredData[filteredData.length - 1].date;
+    const lastDate = filteredData[0].date;
 
-    const formattedRanges = [
-      {
-        label: "Second Half",
-        startDate: formatDate(secondHalfStart),
-        endDate: formatDate(secondHalfEnd),
-      },
-      {
-        label: "First Half",
-        startDate: formatDate(firstHalfStart),
-        endDate: formatDate(firstHalfEnd),
-      },
-    ];
+    setStartSubmitDate(firstDate);
+    setEndSubmitDate(lastDate);
+    setSubmitAdminId(filteredData[0].employeeId);
+    setStatusValue(filteredData[0].status);
 
-    let foundData = null;
-
-    // Try fetching second half first, then fallback to first half
-    for (const range of formattedRanges) {
-      try {
-        const response = await axios.get(
-          `${serverUrl}/working-hours/${adminId}/range`,
-          {
-            params: {
-              startDate: range.startDate,
-              endDate: range.endDate,
-            },
-          }
-        );
-
-        if (response.data && response.data.length > 0) {
-          foundData = {
-            data: response.data,
-            label: range.label,
-          };
-          break; // Stop after finding valid data
-        }
-      } catch (error) {
-        console.error(`Error fetching ${range.label} timesheet:`, error);
-      }
-    }
-
-    if (foundData) {
-      const sortedData = foundData.data.sort((a, b) => new Date(a.date) - new Date(b.date));
-      const firstDate = sortedData[0].date;
-      const lastDate = sortedData[sortedData.length - 1].date;
-
-      setStartSubmitDate(firstDate);
-      setEndSubmitDate(lastDate);
-      setSubmitAdminId(sortedData[0].employeeId);
-      setStatusValue(sortedData[0].status);
-
-      if (sortedData[0].status === "APPROVED" || sortedData[0].status === "REJECTED") {
-        dispatch(submitAdminOFF(false));
-      } else {
-        dispatch(submitAdminON(true));
-      }
+    if (filteredData[0].status === "APPROVED" || filteredData[0].status === "REJECTED") {
+      dispatch(submitAdminOFF(false));
     } else {
-      setStatusValue("No Data Submitted");
+      dispatch(submitAdminON(true));
     }
+  } catch (error) {
+    console.error("Error fetching timesheet data:", error);
   }
+}
+
 
   fetchTimesheetData();
 }, [adminId, dispatch, serverUrl]);
