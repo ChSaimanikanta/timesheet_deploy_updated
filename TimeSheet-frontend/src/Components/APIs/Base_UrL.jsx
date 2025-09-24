@@ -1,4 +1,4 @@
-export const serverUrl = "http://49.204.233.160:4555/api";
+export const serverUrl = "https://timesheet.chiselontechnologies.com/api";
 
 // const ssuperadmin=`${serverUrl}:8089`
 // export const superadmin = `${serverUrl}:8089`;
