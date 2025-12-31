@@ -1,0 +1,200 @@
+body,
+html {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  font-family: Arial, sans-serif;
+}
+
+.background-clr {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  width: 100%;
+  padding: 20px;
+  background-color: #f8f9fa;
+}
+.invalid-feedback {
+  display: block !important;
+  color: red !important;
+}
+
+.employee-form {
+  width: 100%;
+  max-width: 800px;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  margin: 20px auto;
+}
+
+.form-group input,
+.form-group textarea {
+  width: auto;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.buttons {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
+.btn {
+  min-width: 120px;
+}
+
+/* .table-responsive {
+  overflow-x: auto;
+} */
+
+/* Media Queries for Spacing Adjustments */
+@media (max-width: 992px) {
+  /* Medium screens */
+  .background-clr {
+    padding: 30px;
+  }
+
+  .employee-form {
+    padding: 15px;
+    margin: 15px auto;
+  }
+
+  .table-header th,
+  .table-hover tbody tr td {
+    font-size: 14px;
+  }
+}
+
+/* Create Admin User form */
+
+.sprAdmin-createAdmin {
+  width: 90%;
+  margin: 0 auto;
+}
+
+.sprAdmin-createAdmin-title {
+  letter-spacing: 2px;
+  font-weight: bold;
+  text-align: center;
+  color: blue;
+  margin-top: 5px;
+  font-size: 18px;
+}
+
+.sprAdmin-createAdmin-body {
+  background-color: #fff;
+}
+
+.sprAdmin-createAdmin-form {
+  width: 100%;
+  margin: 20px auto;
+}
+
+/* checkboxes */
+.sprAdmin-createAdmin-checkbox-create:checked {
+  background-color: green !important;
+}
+
+.sprAdmin-createAdmin-checkbox-delete:checked {
+  background-color: red !important;
+
+}
+
+/* form error */
+
+.sprAdmin-createAdmin-input-br-error {
+  border: 2px solid rgba(228, 66, 66, 0.826) !important;
+}
+
+.sprAdmin-createAdmin-error-message {
+  color: rgba(228, 14, 14, 0.826);
+}
+
+/* modal */
+/* customize the modal overall width */
+
+.custom-modal {
+  width: 100%;
+  max-width: 300px;
+}
+
+.modal-success img {
+  width: 50px;
+}
+
+.sprAdmin-createAdmin-address {
+  width: 100%; /* Make the textarea occupy the full width of its container */
+  border: 1px solid #ccc;
+  padding: 8px;
+  box-sizing: border-box; /* Ensure padding and border are included in the width */
+  /* Hide vertical scrollbar */
+  resize: none;
+}
+
+label{
+  display: inline-block;
+    margin-left: 2px;
+    margin-top: 3px;
+}
+
+
+@media (max-width: 768px) {
+  .background-clr {
+    padding: 15px;
+  }
+
+  .employee-form {
+    padding: 10px;
+    margin: 10px auto;
+  }
+
+  .form-group {
+    width: auto;
+    margin-bottom: 10px;
+  }
+
+  .table-header th,
+  .table-hover tbody tr td {
+    font-size: 12px;
+  }
+
+  .buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+/* small screens */
+@media (max-width: 576px) {
+  .background-clr {
+    padding: 10px;
+  }
+
+  .employee-form {
+    padding: 8px;
+    margin: 8px auto;
+  }
+
+  .table-header th,
+  .table-hover tbody tr td {
+    font-size: 10px;
+  }
+  .buttons {
+    flex-wrap: nowrap;  /* Prevent wrapping */
+    justify-content: space-between; /* Spread out the buttons */
+    width: 100%;
+  }
+
+  .btn {
+    flex: 1; 
+    max-width: auto;
+    text-align: center;
+  }
+}

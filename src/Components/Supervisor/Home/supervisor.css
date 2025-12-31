@@ -1,0 +1,135 @@
+/* bg color */
+
+
+/* align the container center */
+.ti-home-container {
+    width: 95%;
+    margin: 0 auto;
+    padding-top: 20px;
+    /* background-color: #25a319; */
+    display: flex;
+}
+
+/* notification */
+.ti-home-notification .col {
+    border: 2px solid black;
+    border-radius: 10px;
+}
+
+/* content title */
+.ti-home-content .col .title {
+    background-color: #A5D28D;
+    border-radius: 10px;
+    margin: 0;
+}
+
+/* content body */
+.ti-home-content .col .body {
+    background-color: #fff;
+    margin: 0;
+    border-radius: 10px;
+
+}
+
+/* btn for select */
+.ti-home-content .select-btn {
+    width: 100%;
+    max-width: 200px;
+    background-color: #1C2FBA;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    box-shadow: 0 5px 3px gray;
+}
+
+/* timesheet status */
+.ti-home-ti-status {
+    background-color: #C6CAED;
+    border-radius: 5px;
+}
+
+/* btn for status */
+.ti-home-ti-status .view-btn,
+.status-btn {
+    width: 100%;
+    max-width: 100px;
+    border: none;
+    margin: 10px ;
+
+}
+
+
+/* view btn */
+.ti-home-ti-status .view-btn {
+    background-color: #1C2FBA;
+    color: #fff;
+}
+
+/* status btn */
+.ti-home-ti-status .status-btn {
+    background-color: green;
+    color: #fff;
+}
+
+.ti-home-navigate{
+    background-color: #fff;
+}
+
+/* home navigation */
+.left-navigation {
+    width: 100%;
+    max-width: 20%;
+    margin: 0 right;
+    padding: 20px;
+    background-color: #fff;
+     
+}
+
+.left-navigation button{
+    background-color:  #1C2FBA;
+    color: #fff;
+    width: 100%;
+}
+
+.right-details{
+    width: 100%;
+    max-width: 80%;
+}
+/* App.css or wherever your global styles are located */
+
+
+
+/* App.css or wherever your global styles are located */
+
+.collapse-content {
+    overflow: hidden;
+}
+
+/* Targeting the .collapse-toggle after applying .active class on its parent (.collapse-container) */
+.collapse-container.active .collapse-toggle:after {
+    content: '\25B2';
+    margin-left: 3px;
+    /* Up arrow */
+}
+
+/* Default state */
+.collapse-toggle:after {
+    content: '\25BC';
+    margin-left: 3px;
+    /* Down arrow */
+    float: right;
+}
+
+/* Basic styling for demonstration */
+.collapse-content a {
+    display: block;
+    padding: 8px 16px;
+    text-decoration: none;
+    color: #000;
+    border-bottom: 1px solid #ddd;
+    
+}
+
+.collapse-content a:hover {
+    background-color: #f1f1f1;
+}

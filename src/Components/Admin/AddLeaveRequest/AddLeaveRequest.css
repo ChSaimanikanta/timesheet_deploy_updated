@@ -1,0 +1,92 @@
+/* .ti-leave-management-container {
+  width: 90%;
+  margin: 0 auto;
+}
+
+.leave-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.margin-left{
+  margin-left: 180px;
+}
+
+.leave-row label {
+  width: 100%;
+  text-align: left;
+  margin-bottom: 5px;
+}
+
+.leave-row input,
+.leave-row select,
+.leave-row textarea,
+.leave-row .DatePicker__input {
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+@media (min-width: 576px) {
+  .leave-row label {
+    width: 150px;
+    text-align: right;
+    margin-right: 10px;
+    margin-bottom: 0;
+  }
+
+  .leave-row input,
+  .leave-row select,
+  .leave-row textarea,
+  .leave-row .DatePicker__input {
+    width: calc(100% - 160px);
+    margin-bottom: 0;
+  }
+
+  .leave-row textarea {
+    min-width: unset;
+  }
+}
+
+.center-align {
+  margin: 0 auto;
+  text-align: left;
+}
+
+@media (max-width: 576px) {
+  .center-align {
+    width: 100%;
+  }
+}
+
+.modal-dialog-centered {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+} */
+.leave-row {
+  display: flex;
+  align-items: center; /* Keeps items aligned in the center */
+  justify-content: space-between; /* Adjusts spacing between label and input */
+}
+label {
+  flex: 1; /* Allows the label to take up proportional space */
+}
+input,
+textarea,
+select {
+  flex: 2; /* Ensures input fields align consistently */
+}
+@media (max-width: 768px) {
+  .leave-row {
+    flex-direction: column; /* Stack label and input vertically */
+    align-items: stretch; /* Make them full width */
+  }
+  label {
+    margin-bottom: 5px; /* Adds spacing between label and input */
+  }
+}
+.error-message {
+  color: red;
+  font-size: 12px;
+  margin-top: 3px; /* Adds slight spacing */
+}

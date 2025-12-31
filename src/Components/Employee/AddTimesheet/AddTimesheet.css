@@ -1,0 +1,80 @@
+/* AddTimesheet.css */
+
+.container {
+  width: 90%;
+  margin: 0 auto;
+}
+
+.label-input-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1rem;
+}
+
+.button-container-1 {
+  display: flex;
+  justify-content: space-between;
+}
+button:disabled {
+  cursor: not-allowed; /* Shows a "not-allowed" cursor instead of a hand pointer */
+  opacity: 0.6;        /* Optional: Make disabled buttons appear visually distinct */
+}
+
+.table {
+  margin-top: 1.5rem;
+}
+
+.button-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+/* Base styles */
+.table-header th,
+.table-hover tbody tr td {
+  font-size: 16px;
+  padding: 0.5rem;
+  width: auto;
+}
+
+/* For large screens */
+@media (max-width: 1500px) {
+  .table-header th,
+  .table-hover tbody tr td {
+    font-size: 15px;
+    padding: 0.4rem 3rem;
+  }
+}
+
+/* For medium screens */
+@media (max-width: 992px) {
+  .table-header th,
+  .table-hover tbody tr td {
+    font-size: 14px;
+    padding: 0.3rem 2rem;
+  }
+}
+
+/* For small screens */
+@media (max-width: 768px) {
+  .table-header th,
+  .table-hover tbody tr td {
+    font-size: 12px;
+    padding: 0.2rem 1rem;
+  }
+  .selection-c{
+    font-size: 12px; /* Even smaller for very small screens */
+    padding: 0.1rem 4rem; /* Adjust padding */
+    width: auto;
+  }
+}
+
+/* For extra small screens */
+@media (max-width: 576px) {
+  .table-header th,
+  .table-hover tbody tr td {
+    font-size: 10px;
+    padding: 0.1rem 0.5rem;
+  }
+}

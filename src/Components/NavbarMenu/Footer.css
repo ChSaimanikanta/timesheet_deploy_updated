@@ -1,0 +1,33 @@
+/* Footer Styling */
+.footer {
+    width: 100%;
+    background-color: #3e404f;
+    color: white;
+    padding: 12px 15px;
+    text-align: center;
+    font-size: 14px;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    z-index: 1000;
+}
+
+/* Ensure layout doesn't overlap with fixed footer */
+.content-container {
+    padding-bottom: 50px; /* Adjust based on footer height */
+}
+
+/* Responsive Footer */
+@media (max-width: 1024px) {
+    .footer {
+        font-size: 13px;
+        padding: 10px;
+    }
+}
+
+@media (max-width: 768px) {
+    .footer {
+        font-size: 12px;
+        padding: 8px;
+    }
+}

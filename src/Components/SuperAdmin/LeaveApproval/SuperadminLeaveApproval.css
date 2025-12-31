@@ -1,0 +1,16 @@
+@media (max-width: 999px) {
+    .first{
+     display:flex;
+    }
+   }
+   /* .first1{
+      display: flex;
+      flex-direction:column;
+      
+   } */
+   /* @media(max-width:577px){
+      thead{
+         width:100% !important;
+      }
+   } */
+    

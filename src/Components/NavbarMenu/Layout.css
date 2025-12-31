@@ -1,0 +1,47 @@
+/* Layout container */
+.layout-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    overflow: hidden;
+}
+
+/* Ensure content takes available space */
+.content-container {
+    flex: 1;
+    overflow-y: auto; 
+}
+
+/* Header styling */
+.header {
+    width: 100%;
+    background-color: #1c2fba;
+    color: white;
+    padding: 15px 20px;
+    text-align: center;
+    font-size: 18px;
+}
+
+/* Footer styling */
+.footer {
+    width: 100%;
+    background-color: #3e404f;
+    color: white;
+    padding: 8px 12px;
+    text-align: center;
+    font-size: 14px;
+    margin-top: auto; /* Push footer to bottom */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .header {
+        font-size: 16px;
+        padding: 10px;
+    }
+
+    .footer {
+        font-size: 12px;
+        padding: 6px;
+    }
+}

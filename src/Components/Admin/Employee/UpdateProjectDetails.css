@@ -1,0 +1,74 @@
+/* UpdateProjectDetails.css */
+
+/* Set the background color for the overall container */
+.update-project-container {
+  display: flex;
+  flex-direction: column; /* Adjust to a column layout */
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background-color: #f5ffd7;
+}
+
+/* Apply the styles for the search project container */
+.search-project-container {
+  background-color: #fff;
+  width: 80%;
+  margin: 20px auto;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Center the search input container */
+.search-input-container {
+  width: 100%;
+}
+
+/* Apply the styles for the project details section */
+.project-details-section {
+  width: 80%;
+  margin-top: 20px;
+}
+
+/* Apply the styles for the project details container */
+.project-details-container {
+  background-color: #fff;
+  width: 100%;
+  margin: 20px auto;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Apply the styles for the project details header */
+.project-details-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Apply the styles for the edit button */
+.edit-button {
+  background-color: #aa0b00;
+  color: #fff;
+}
+
+/* Apply the styles for the button container */
+.button {
+  margin: 5px;
+}
+
+/* Apply the styles for the centered button container */
+.centered-button-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+/* Apply the styles for the create new project button */
+.centered-button-container button {
+  width: 200px;
+}
+
+
