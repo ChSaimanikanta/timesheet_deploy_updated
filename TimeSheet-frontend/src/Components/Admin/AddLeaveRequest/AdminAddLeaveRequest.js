@@ -4,22 +4,20 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import "./AddLeaveRequest.css";
 import { schemaLeave } from "./LeaveSchema";
-import leaveUrl from "../../Api/leaveRequest";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { Modal, Button } from "react-bootstrap";
+import { Modal } from "react-bootstrap";
 import successCheck from "../../Image/checked.png";
-import { leaveSubmitON, leaveSubmitOFF } from "../../features/empLeaveSubmit";
+import { leaveSubmitON } from "../../features/empLeaveSubmit";
 import { useSelector, useDispatch } from "react-redux";
 import { serverUrl } from "../../APIs/Base_UrL";
-
+import { getValidLeaveDays } from "../../../Utils/holidays"; // ✅ IMPORT
 
 export function AdminAddLeaveRequest() {
   const adminValue = useSelector((state) => state.adminLogin.value);
   const adminId = adminValue.adminId;
 
   const [leaveSuccessModal, setLeaveSuccessModal] = useState(false);
-  const [numberOfDays, setNumberOfDays] = useState(0);
   const [approvedLeaveCount, setApprovedLeaveCount] = useState(0);
   const [totalLeaves, setTotalLeaves] = useState(18);
   const [pendingLeaves, setPendingLeaves] = useState(0);
@@ -27,27 +25,21 @@ export function AdminAddLeaveRequest() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  // Function to calculate pending leaves
   const calculatePendingLeaves = () => {
-    const count = totalLeaves - approvedLeaveCount;
-    setPendingLeaves(count);
+    setPendingLeaves(totalLeaves - approvedLeaveCount);
   };
 
-  // Function to fetch approved leave count
   const calculateApprovedLeave = async () => {
     try {
-      const response = await axios.get(
-        `${serverUrl}/admin/leave-requests`
-      );
-
+      const response = await axios.get(`${serverUrl}/admin/leave-requests`);
       const currentYear = new Date().getFullYear();
-      const allLeaves = response.data;
 
-      const approvedDays = allLeaves
-        .filter((leave) => {
-          const leaveYear = new Date(leave.startDate).getFullYear();
-          return leave.status === "APPROVED" && leaveYear === currentYear;
-        })
+      const approvedDays = response.data
+        .filter(
+          (leave) =>
+            leave.status === "APPROVED" &&
+            new Date(leave.startDate).getFullYear() === currentYear
+        )
         .reduce((sum, leave) => sum + leave.noOfDays, 0);
 
       setApprovedLeaveCount(approvedDays);
@@ -75,16 +67,21 @@ export function AdminAddLeaveRequest() {
     },
     validationSchema: schemaLeave,
     onSubmit: async (values) => {
+      const requestedDays = values.noOfDays;
+
+      if (requestedDays > pendingLeaves) {
+        alert(
+          `❌ You cannot request ${requestedDays} days. Only ${pendingLeaves} days are available.`
+        );
+        return;
+      }
+
+      if (requestedDays === 0) {
+        alert("❌ Leave cannot be applied only for Sundays/Holidays.");
+        return;
+      }
+
       try {
-        const requestedDays = values.noOfDays;
-
-        if (requestedDays > pendingLeaves) {
-          alert(
-            `Error: You cannot request ${requestedDays} days. Only ${pendingLeaves} days are available.`
-          );
-          return;
-        }
-
         const leaveData = await axios.post(
           `${serverUrl}/admin/leave-requests`,
           values
@@ -92,7 +89,7 @@ export function AdminAddLeaveRequest() {
 
         if (leaveData.data) {
           setLeaveSuccessModal(true);
-          setTotalLeaves((prevTotalLeaves) => prevTotalLeaves - requestedDays);
+          setTotalLeaves((prev) => prev - requestedDays);
           localStorage.setItem(`leaveObjectId${adminId}`, leaveData.data.id);
           dispatch(leaveSubmitON(true));
           formik.resetForm();
@@ -103,28 +100,13 @@ export function AdminAddLeaveRequest() {
     },
   });
 
+  // ⭐ EXCLUDE Sundays + Holidays (NOW USING SHARED UTILITY)
   useEffect(() => {
-  if (formik.values.startDate && formik.values.endDate) {
-    const start = new Date(formik.values.startDate);
-    const end = new Date(formik.values.endDate);
-    let days = 0;
-
-    // Clone the start date to avoid mutating it
-    let current = new Date(start);
-
-    // Loop through each date in the range and count only non-Sundays
-    while (current <= end) {
-      if (current.getDay() !== 0) { // Exclude Sundays (0)
-        days++;
-      }
-      current.setDate(current.getDate() + 1);
+    if (formik.values.startDate && formik.values.endDate) {
+      const days = getValidLeaveDays(formik.values.startDate, formik.values.endDate);
+      formik.setFieldValue("noOfDays", days);
     }
-
-    setNumberOfDays(days);
-    formik.setFieldValue("noOfDays", days);
-  }
-}, [formik.values.startDate, formik.values.endDate]);
-
+  }, [formik.values.startDate, formik.values.endDate]);
    
   return (
     <>

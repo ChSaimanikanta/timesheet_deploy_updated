@@ -1,13 +1,18 @@
 import React from "react";
-import './Footer.css';
+import "./Footer.css";
 
 const Footer = () => {
-  //const currentYear = new Date().getFullYear(); // Fetch the current year
-
   return (
-    <div className="footer text-center py-3">
-      Powered by Chiselon Technologies PVT Ltd. Excellence since 2015.
-    </div>
+    <footer className="professional-footer">
+      <div className="footer-container">
+        <span>
+          © {new Date().getFullYear()} Chiselon Technologies Pvt. Ltd.
+        </span>
+        <span className="footer-right">
+         Delivering innovative digital solutions with excellence since 2015.
+        </span>
+      </div>
+    </footer>
   );
 };
 

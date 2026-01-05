@@ -11,29 +11,23 @@ import { schemaLeave } from "./EmployeeLeaveSchema";
 import { leaveSubmitON } from "../../features/empLeaveSubmit";
 import "./EmployeeLeaveRequest.css";
 import { leaveRequest_Url, serverUrl } from "../../APIs/Base_UrL";
+import { getValidLeaveDays } from "../../../Utils/holidays";
 
 export function EmployeeLeaveRequest() {
-  const employeeValue = useSelector((state) => state.employeeLogin.value);
+   const employeeValue = useSelector((state) => state.employeeLogin.value);
   const employeeId = employeeValue.employeeId;
 
   const [leaveSuccessModal, setLeaveSuccessModal] = useState(false);
-  const [numberOfDays, setNumberOfDays] = useState(0);
   const [approvedLeaveCount, setApprovedLeaveCount] = useState(0);
-  const [totalLeaves, setTotalLeaves] = useState(18);
+  const [totalLeaves] = useState(18);
   const [pendingLeaves, setPendingLeaves] = useState(0);
-const [showErrorModal, setShowErrorModal] = useState(false);
-const [errorMessage, setErrorMessage] = useState("");
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  // Function to calculate pending leaves
-  const calculatePendingLeaves = () => {
-    const count = totalLeaves - approvedLeaveCount;
-    setPendingLeaves(count);
-  };
-
-  // Function to filter approved leaves for the current year
+  /* ---------------- FETCH APPROVED LEAVES ---------------- */
   const calculateApprovedLeave = async () => {
     try {
       const response = await axios.get(
@@ -41,13 +35,13 @@ const [errorMessage, setErrorMessage] = useState("");
       );
 
       const currentYear = new Date().getFullYear();
-      const allLeaves = response.data;
 
-      const approvedDays = allLeaves
-        .filter((leave) => {
-          const leaveYear = new Date(leave.startDate).getFullYear();
-          return leave.status === "APPROVED" && leaveYear === currentYear;
-        })
+      const approvedDays = response.data
+        .filter(
+          (leave) =>
+            leave.status === "APPROVED" &&
+            new Date(leave.startDate).getFullYear() === currentYear
+        )
         .reduce((sum, leave) => sum + leave.noOfDays, 0);
 
       setApprovedLeaveCount(approvedDays);
@@ -61,80 +55,63 @@ const [errorMessage, setErrorMessage] = useState("");
   }, []);
 
   useEffect(() => {
-    calculatePendingLeaves();
+    setPendingLeaves(totalLeaves - approvedLeaveCount);
   }, [approvedLeaveCount, totalLeaves]);
 
-  // Automatically calculate number of leave days
+  /* ---------------- FORM ---------------- */
   const formik = useFormik({
     initialValues: {
       employeeId,
-      startDate: "", // Empty by default
-      endDate: "", // Empty by default
+      startDate: "",
+      endDate: "",
       noOfDays: 0,
       reason: "",
       comments: "",
     },
     validationSchema: schemaLeave,
-   onSubmit: async (values) => {
-  try {
-    const requestedDays = values.noOfDays;
+    onSubmit: async (values) => {
+      try {
+        if (values.noOfDays === 0) {
+          setErrorMessage(
+            "❌ You cannot apply leave only on holidays or Sundays."
+          );
+          setShowErrorModal(true);
+          return;
+        }
 
-    if (requestedDays > pendingLeaves) {
-      setErrorMessage(`You requested ${requestedDays} days, but only ${pendingLeaves} are available.`);
-      setShowErrorModal(true);
-      return;
-    }
+        if (values.noOfDays > pendingLeaves) {
+          setErrorMessage(
+            `❌ You requested ${values.noOfDays} days, but only ${pendingLeaves} are available.`
+          );
+          setShowErrorModal(true);
+          return;
+        }
 
-    const response = await axios.post(`${serverUrl}/leaverequests`, values);
+        await axios.post(`${serverUrl}/leaverequests`, values);
 
-    if (response.data?.error) {
-      setErrorMessage(response.data.error);
-      setShowErrorModal(true);
-      return;
-    }
-
-    setLeaveSuccessModal(true);
-    setTotalLeaves((prev) => prev - requestedDays);
-    localStorage.setItem(`leaveObjectId${employeeId}`, response.data.id);
-    dispatch(leaveSubmitON(true));
-    formik.resetForm();
-
-  } catch (error) {
-    if (error.response && error.response.status === 422) {
-      const serverMessage = error.response.data?.error || "Request could not be processed.";
-      setErrorMessage(serverMessage);
-      setShowErrorModal(true);
-    } else {
-      console.error("Unexpected error:", error);
-      setErrorMessage("Something went wrong while submitting your leave. Please try again.");
-      setShowErrorModal(true);
-    }
-  }
-},
+        setLeaveSuccessModal(true);
+        dispatch(leaveSubmitON(true));
+        formik.resetForm();
+      } catch (error) {
+        setErrorMessage(
+          error.response?.data?.error ||
+            "Something went wrong. Please try again."
+        );
+        setShowErrorModal(true);
+      }
+    },
   });
 
+  /* ---------------- AUTO CALCULATE LEAVE DAYS ---------------- */
   useEffect(() => {
-  if (formik.values.startDate && formik.values.endDate) {
-    const start = new Date(formik.values.startDate);
-    const end = new Date(formik.values.endDate);
-    let days = 0;
-
-    // Clone the start date to avoid mutating it
-    let current = new Date(start);
-
-    // Loop through each date in the range and count only non-Sundays
-    while (current <= end) {
-      if (current.getDay() !== 0) { // Exclude Sundays (0)
-        days++;
-      }
-      current.setDate(current.getDate() + 1);
+    if (formik.values.startDate && formik.values.endDate) {
+      const days = getValidLeaveDays(
+        formik.values.startDate,
+        formik.values.endDate
+      );
+      formik.setFieldValue("noOfDays", days);
     }
-
-    setNumberOfDays(days);
-    formik.setFieldValue("noOfDays", days);
-  }
-}, [formik.values.startDate, formik.values.endDate]);
-
+  }, [formik.values.startDate, formik.values.endDate]);
   
   return (
     <>
