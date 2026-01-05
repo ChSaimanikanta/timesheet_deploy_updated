@@ -7,6 +7,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { submitON, submitOFF } from "../../features/submitBtn";
 import { Modal, Button } from "react-bootstrap";
 import successCheck from "../../Image/checked.png";
+import { isHoliday } from "../../../Utils/holidays";
 
 import "./AddTimesheet.css";
 import { adminUrl, serverUrl, supervisorurl } from "../../APIs/Base_UrL";
@@ -243,13 +244,13 @@ const AddTimesheet = () => {
     const date = new Date(selectedMonth + "-01"); // Convert YYYY-MM to Date
     return date.toLocaleString("en-US", { month: "long", year: "numeric" }); // "May 2025"
   };
-    const startMonth = new Date(new Date().getFullYear(), new Date().getMonth() - 2) // Allows selection up to exactly 3 months ago
+  const startMonth = new Date(new Date().getFullYear(), new Date().getMonth() - 2) // Allows selection up to exactly 3 months ago
     .toISOString()
     .slice(0, 7);
 
   const endMonth = new Date().toISOString().slice(0, 7); // Current month (latest allowed)
 
-   function calculateTotalWorkHours(selectedMonth) {
+  function calculateTotalWorkHours(selectedMonth) {
     let totalWorkHours = 0;
 
     projectRows.forEach((row) => {
@@ -266,7 +267,7 @@ const AddTimesheet = () => {
     setTotal(totalWorkHours);
   }
 
- useEffect(() => {
+  useEffect(() => {
     calculateTotalWorkHours(selectedMonth);
   }, [selectedMonth, projectRows]);
 
@@ -404,78 +405,72 @@ const AddTimesheet = () => {
 
 
   const submitTimesheetData = async () => {
-    if (!validateTimesheetData()) {
-      return;
-    }
+  if (!validateTimesheetData()) return;
 
-    setAddDataSubmitConfirmation(false);
+  setAddDataSubmitConfirmation(false);
 
-    // ✅ Ensure `formattedData` is properly initialized
-    let formattedData = [];
+  let formattedData = [];
 
-    const dateFormatter = new Intl.DateTimeFormat("en-GB", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    });
+  timesheetData.forEach((entry) => {
+    const dateStr = entry.date.toISOString().split("T")[0];
 
-    timesheetData.forEach((entry) => {
-      const formattedDate = dateFormatter.format(entry.date);
-      const [day, month, year] = formattedDate.split("/");
-      const dateStr = `${year}-${month}-${day}`;
+    // ❌ Skip Sundays & Holidays completely
+    if (isSunday(entry.date) || isHoliday(entry.date)) return;
 
-      projectRows.forEach((row) => {
-        if (row.projectId) {
-          formattedData.push({
-            employeeId: supervisorId,
-            projectId: row.projectId,
-            date: dateStr,
-            hours: row.workHours?.[dateStr] || 0,
-          });
-        }
+    projectRows.forEach((row) => {
+      const hours = row.workHours?.[dateStr];
+
+      // ❌ Skip empty or zero hours
+      if (!row.projectId || !hours || Number(hours) === 0) return;
+
+      formattedData.push({
+        employeeId: supervisorId,
+        projectId: row.projectId,
+        date: dateStr,
+        hours: Number(hours),
       });
     });
+  });
 
-    console.log(formattedData); // Debugging
+  console.log("✅ Final Payload:", formattedData);
 
-    if (formattedData.length > 0) {
-      try {
-        const response = await axios.post(`${serverUrl}/sup/api/working-hours`, formattedData);
+  if (formattedData.length === 0) {
+    console.warn("⚠ No valid working hours to submit");
+    return;
+  }
 
-        if (response.data) {
-          let updatedSubmittedDates = { ...submittedDates };
-          let updatedSubmittedHalf = { ...submittedHalf };
+  try {
+    const response = await axios.post(
+      `${serverUrl}/sup/api/working-hours`,
+      formattedData
+    );
 
-          formattedData.forEach(entry => {
-            updatedSubmittedDates[entry.date] = true;
+    if (response.data) {
+      let updatedSubmittedDates = { ...submittedDates };
+      let updatedSubmittedHalf = { ...submittedHalf };
 
-            const day = parseInt(entry.date.split("-")[2], 10);
-            if (day >= 1 && day <= 15) {
-              updatedSubmittedHalf.firstHalf = true;
-            } else {
-              updatedSubmittedHalf.secondHalf = true;
-            }
-          });
+      formattedData.forEach((entry) => {
+        updatedSubmittedDates[entry.date] = true;
 
-          setSubmittedDates(updatedSubmittedDates);
-          setSubmittedHalf(updatedSubmittedHalf);
-          setSuccessModalForTimesheet(true);
-
-          let receivedData = response.data;
-          let firstDate = receivedData[0].date;
-          let lastDate = receivedData[receivedData.length - 1].date;
-
-          setStartSubmitDate(firstDate);
-          setEndSubmitDate(lastDate);
+        const day = parseInt(entry.date.split("-")[2], 10);
+        if (day <= 15) {
+          updatedSubmittedHalf.firstHalf = true;
+        } else {
+          updatedSubmittedHalf.secondHalf = true;
         }
-      } catch (error) {
-        console.error("Error saving supervisor timesheet data:", error);
-        // setTimesheetError("Failed to submit supervisor timesheet. Please try again.");
-      }
-    } else {
-      console.warn("No supervisor data to save.");
+      });
+
+      setSubmittedDates(updatedSubmittedDates);
+      setSubmittedHalf(updatedSubmittedHalf);
+      setSuccessModalForTimesheet(true);
+
+      setStartSubmitDate(formattedData[0].date);
+      setEndSubmitDate(formattedData[formattedData.length - 1].date);
     }
-  };
+  } catch (error) {
+    console.error("❌ Error saving supervisor timesheet:", error);
+  }
+};
 
   function closeSuccessModal() {
     setSuccessModalForTimesheet(false);
@@ -603,9 +598,16 @@ const AddTimesheet = () => {
                           <td
                             key={index}
                             style={{
-                              backgroundColor: entry?.date?.getDay() === 0 ? "gold" : "#c8e184",
+                              backgroundColor: isHoliday(entry.date)
+                                ? "#3498db"       // 🔵 Holiday
+                                : entry.date.getDay() === 0
+                                  ? "gold"        // 🟡 Sunday
+                                  : "#c8e184",
+                              color: isHoliday(entry.date) ? "white" : "black",
+                              fontWeight: isHoliday(entry.date) ? "bold" : "normal",
                             }}
                           >
+
                             {
                               entry?.date
                                 ? entry.date.toLocaleDateString("en-US", { weekday: "short" })
@@ -647,30 +649,43 @@ const AddTimesheet = () => {
 
                           </td>
                           {
-                            timesheetData.map((entry, columnIndex) => (
-                              <td key={columnIndex} style={{ backgroundColor: "#e8fcaf" }}>
-                                <input
-                                  type="text"
-                                  inputMode="numeric"
-                                  className="AddTimesheet form-control my-3"
-                                  placeholder="0"
-                                  value={
-                                    project.workHours && project.workHours[entry.date.toISOString().split("T")[0]]
-                                      ? project.workHours[entry.date.toISOString().split("T")[0]]
-                                      : ""
-                                  }
-                                  disabled={submittedDates[entry.date.toISOString().split("T")[0]] || isSunday(entry.date)}  // ✅ Disables ONLY submitted work hours
-                                  onChange={(e) =>
-                                    handleWorkHoursChange(
-                                      rowIndex,
-                                      entry.date.toISOString().split("T")[0],
-                                      e.target.value
-                                    )
-                                  }
-                                />
-                              </td>
-                            ))
+                            timesheetData.map((entry, columnIndex) => {
+                              const dateKey = entry.date.toISOString().split("T")[0];
+                              const holiday = isHoliday(entry.date);
+                              const sunday = isSunday(entry.date);
+
+                              return (
+                                <td key={columnIndex} style={{ backgroundColor: "#e8fcaf" }}>
+                                  <input
+                                    type="text"
+                                    className="AddTimesheet form-control my-3 text-center"
+                                    value={
+                                      holiday
+                                        ? "Holiday"
+                                        : sunday
+                                          ? "0"
+                                          : project.workHours?.[dateKey] || ""
+                                    }
+                                    disabled={holiday || sunday || submittedDates[dateKey]}
+                                    style={{
+                                      backgroundColor: holiday
+                                        ? "#3498db"   // 🔵 Holiday
+                                        : sunday
+                                          ? "#f9e79f" // 🟡 Sunday
+                                          : "white",
+                                      color: holiday ? "white" : "black",
+                                      fontWeight: holiday ? "bold" : "normal",
+                                      cursor: holiday ? "not-allowed" : "text",
+                                    }}
+                                    onChange={(e) =>
+                                      handleWorkHoursChange(rowIndex, dateKey, e.target.value)
+                                    }
+                                  />
+                                </td>
+                              );
+                            })
                           }
+
                           <td style={{ backgroundColor: "#e8fcaf" }}>
                             <button
                               className="AddTimesheet btn btn-danger my-3"
@@ -712,7 +727,7 @@ const AddTimesheet = () => {
                 >
                   Save
                 </button> */}
-                 <button
+                <button
                   className="AddTimesheet btn m-3 w-5"
                   onClick={() => setAddDataSubmitConfirmation(true)}
                   style={{

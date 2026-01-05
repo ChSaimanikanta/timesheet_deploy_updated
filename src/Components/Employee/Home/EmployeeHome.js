@@ -33,92 +33,92 @@ function EmployeeHome() {
   const [showModal, setShowModal] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
   // Fetch timesheet submission data dynamically
-useEffect(() => {
-  async function fetchTimesheetData() {
-    if (!employeeId) {
-      console.warn("Employee ID is missing.");
-      return;
-    }
+  useEffect(() => {
+    async function fetchTimesheetData() {
+      if (!employeeId) {
+        console.warn("Employee ID is missing.");
+        return;
+      }
 
-    const formatDate = (date) => date.toLocaleDateString("en-CA");
+      const formatDate = (date) => date.toLocaleDateString("en-CA");
 
-    // Generate date ranges for the last 3 months (or more if needed)
-    const today = new Date();
-    const ranges = [];
+      // Generate date ranges for the last 3 months (or more if needed)
+      const today = new Date();
+      const ranges = [];
 
-    for (let i = 0; i < 3; i++) {
-      const monthDate = new Date(today.getFullYear(), today.getMonth() - i, 1);
-      const year = monthDate.getFullYear();
-      const month = monthDate.getMonth();
+      for (let i = 0; i < 3; i++) {
+        const monthDate = new Date(today.getFullYear(), today.getMonth() - i, 1);
+        const year = monthDate.getFullYear();
+        const month = monthDate.getMonth();
 
-      const firstHalfStart = new Date(year, month, 1);
-      const firstHalfEnd = new Date(year, month, 15, 23, 59, 59, 999);
-      const secondHalfStart = new Date(year, month, 16);
-      const secondHalfEnd = new Date(year, month + 1, 0, 23, 59, 59, 999);
+        const firstHalfStart = new Date(year, month, 1);
+        const firstHalfEnd = new Date(year, month, 15, 23, 59, 59, 999);
+        const secondHalfStart = new Date(year, month, 16);
+        const secondHalfEnd = new Date(year, month + 1, 0, 23, 59, 59, 999);
 
-      ranges.push(
-        {
-          label: "Second Half",
-          startDate: formatDate(secondHalfStart),
-          endDate: formatDate(secondHalfEnd),
-        },
-        {
-          label: "First Half",
-          startDate: formatDate(firstHalfStart),
-          endDate: formatDate(firstHalfEnd),
-        }
-      );
-    }
-
-    let foundData = null;
-
-    for (const range of ranges) {
-      try {
-        const response = await axios.get(
-          `${serverUrl}/workinghours/employee/${employeeId}/range`,
+        ranges.push(
           {
-            params: {
-              startDate: range.startDate,
-              endDate: range.endDate,
-            },
+            label: "Second Half",
+            startDate: formatDate(secondHalfStart),
+            endDate: formatDate(secondHalfEnd),
+          },
+          {
+            label: "First Half",
+            startDate: formatDate(firstHalfStart),
+            endDate: formatDate(firstHalfEnd),
           }
         );
+      }
 
-        if (response.data && response.data.length > 0) {
-          foundData = {
-            data: response.data,
-            label: range.label,
-          };
-          break; // Stop at the most recent valid submission
+      let foundData = null;
+
+      for (const range of ranges) {
+        try {
+          const response = await axios.get(
+            `${serverUrl}/workinghours/employee/${employeeId}/range`,
+            {
+              params: {
+                startDate: range.startDate,
+                endDate: range.endDate,
+              },
+            }
+          );
+
+          if (response.data && response.data.length > 0) {
+            foundData = {
+              data: response.data,
+              label: range.label,
+            };
+            break; // Stop at the most recent valid submission
+          }
+        } catch (error) {
+          console.error(`Error fetching ${range.label} timesheet:`, error);
         }
-      } catch (error) {
-        console.error(`Error fetching ${range.label} timesheet:`, error);
       }
-    }
 
-    if (foundData) {
-      const sortedData = foundData.data.sort((a, b) => new Date(a.date) - new Date(b.date));
-      const firstDate = sortedData[0].date;
-      const lastDate = sortedData[sortedData.length - 1].date;
+      if (foundData) {
+        const sortedData = foundData.data.sort((a, b) => new Date(a.date) - new Date(b.date));
+        const firstDate = sortedData[0].date;
+        const lastDate = sortedData[sortedData.length - 1].date;
 
-      setStartSubmitDate(firstDate);
-      setEndSubmitDate(lastDate);
-      setSubmitEmployeeId(sortedData[0].employeeId);
-      setStatusValue(sortedData[0].status);
+        setStartSubmitDate(firstDate);
+        setEndSubmitDate(lastDate);
+        setSubmitEmployeeId(sortedData[0].employeeId);
+        setStatusValue(sortedData[0].status);
 
-      const status = sortedData[0].status;
-      if (status === "APPROVED" || status === "REJECTED") {
-        dispatch(submitOFF(false));
+        const status = sortedData[0].status;
+        if (status === "APPROVED" || status === "REJECTED") {
+          dispatch(submitOFF(false));
+        } else {
+          dispatch(submitON(true));
+        }
       } else {
-        dispatch(submitON(true));
+        setStatusValue("No Data Submitted");
       }
-    } else {
-      setStatusValue("No Data Submitted");
     }
-  }
 
-  fetchTimesheetData();
-}, [employeeId, dispatch, serverUrl]);
+    fetchTimesheetData();
+  }, [employeeId, dispatch, serverUrl]);
 
 
   async function leaveStatus() {

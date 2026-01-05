@@ -9,6 +9,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { serverUrl } from "../../APIs/Base_UrL";
+import { getValidLeaveDays } from "../../../Utils/holidays"; // ✅ IMPORT
 
 function AdminEditLeaveRequest() {
   const [lastLeaveRequestData, setLastLeaveRequestData] = useState(null);
@@ -16,16 +17,7 @@ function AdminEditLeaveRequest() {
   const [confirmationModal, setConfirmationModal] = useState(false);
   const [successModal, setSuccessModal] = useState(false);
   const navigate = useNavigate();
-  const [numberOfDays, setNumberOfDays] = useState(0);
-  const adminValue = useSelector((state) => state.adminLogin.value);
-  const adminId = adminValue.adminId;
-
-  // 🚫 2026 HYDERABAD HOLIDAYS (excluded from leave count)
-  const holidays2026 = [
-    "2026-01-14","2026-01-26","2026-03-19","2026-03-20","2026-03-27",
-    "2026-05-01","2026-05-27","2026-06-02","2026-08-10","2026-08-15",
-    "2026-09-14","2026-10-02","2026-10-20","2026-11-08","2026-12-25"
-  ];
+  const adminId = useSelector((state) => state.adminLogin.value.adminId);
 
   const formik = useFormik({
     initialValues: {
@@ -41,16 +33,14 @@ function AdminEditLeaveRequest() {
     onSubmit: editLeaveRequest,
   });
 
-  // Fetch the last pending leave request for editing
   async function fetchLeaveData() {
     try {
       const response = await axios.get(`${serverUrl}/admin/leave-requests`);
-      const pendingItems = response.data.filter(
-        (item) => item.status === "PENDING"
-      );
+      const pendingItems = response.data.filter((item) => item.status === "PENDING");
 
       if (pendingItems.length > 0) {
         const lastRequest = pendingItems[pendingItems.length - 1];
+
         setLastLeaveRequestData(lastRequest);
         setEditId(lastRequest.id);
 
@@ -73,30 +63,11 @@ function AdminEditLeaveRequest() {
     fetchLeaveData();
   }, []);
 
-  // ⭐ EXCLUDE Sundays + Holidays from leave calculation
+  // ⭐ UPDATE: Sunday + Holiday count using utility
   useEffect(() => {
     if (formik.values.startDate && formik.values.endDate) {
-      const start = new Date(formik.values.startDate);
-      const end = new Date(formik.values.endDate);
-      let days = 0;
-      let current = new Date(start);
-
-      while (current <= end) {
-        const dateStr = current.toISOString().substring(0, 10);
-
-        if (current.getDay() !== 0 && !holidays2026.includes(dateStr)) {
-          days++;
-        }
-
-        current.setDate(current.getDate() + 1);
-      }
-
-      setNumberOfDays(days);
+      const days = getValidLeaveDays(formik.values.startDate, formik.values.endDate);
       formik.setFieldValue("noOfDays", days);
-
-      if (days === 0) {
-        console.warn("Only holidays or Sunday selected");
-      }
     }
   }, [formik.values.startDate, formik.values.endDate]);
 
@@ -104,15 +75,12 @@ function AdminEditLeaveRequest() {
     setConfirmationModal(false);
 
     if (formik.values.noOfDays === 0) {
-      alert("❌ You cannot apply leave only on holidays or Sundays.");
+      alert("❌ Leave cannot be updated only for Sundays/Holidays.");
       return;
     }
 
     try {
-      await axios.put(
-        `${serverUrl}/admin/leave-requests/${editId}`,
-        formik.values
-      );
+      await axios.put(`${serverUrl}/admin/leave-requests/${editId}`, formik.values);
       setSuccessModal(true);
     } catch (error) {
       console.error("Error updating leave request:", error);

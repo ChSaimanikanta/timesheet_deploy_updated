@@ -3,13 +3,13 @@ import { useFormik } from "formik";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { schemaLeave } from "./LeaveSchema";
-import leaveUrl from "../../Api/leaveRequest";
 import { Modal, Button } from "react-bootstrap";
 import successCheck from "../../Image/checked.png";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { serverUrl, supervisorurl } from "../../APIs/Base_UrL";
+import { serverUrl } from "../../APIs/Base_UrL";
+import { isHoliday } from "../../../Utils/holidays";
 
 function SupervisorEditLeaveRequest() {
   const [lastLeaveRequestData, setLastLeaveRequestData] = useState({});
@@ -20,8 +20,8 @@ function SupervisorEditLeaveRequest() {
 
   const supervisorValue = useSelector(state => state.supervisorLogin.value);
   const supervisorId = supervisorValue.supervisorId;
-const [numberOfDays, setNumberOfDays] = useState(0);
-console.log(lastLeaveRequestData)
+  const [numberOfDays, setNumberOfDays] = useState(0);
+  console.log(lastLeaveRequestData)
   const formik = useFormik({
     initialValues: {
       empId: "",
@@ -44,21 +44,21 @@ console.log(lastLeaveRequestData)
       console.log("fetchLeaveData try");
       const response = await axios.get(`${serverUrl}/supervisor/leave-requests`);
       console.log("Data received from server:", JSON.stringify(response.data, null, 2)); // Pretty-print JSON
-      
+
       const leaveRequest = response.data; // Keep it as an object/array, not a string.
       console.log(leaveRequest)
-  
+
       const filteringSupervisorId = leaveRequest.filter(item => item.supervisorId === supervisorId);
 
-      console.log("filteringSupervisorId"+filteringSupervisorId)
-      console.log("supervisorId"+supervisorId)
+      console.log("filteringSupervisorId" + filteringSupervisorId)
+      console.log("supervisorId" + supervisorId)
       const pendingItems = filteringSupervisorId.filter(item => item.status === "PENDING");
-      console.log("pendingItems"+pendingItems)
-  
+      console.log("pendingItems" + pendingItems)
+
       if (pendingItems.length > 0) {
         const lastRequest = pendingItems[pendingItems.length - 1];
-        console.log("lastLeaveRequest"+lastRequest)
-  
+        console.log("lastLeaveRequest" + lastRequest)
+
         setLastLeaveRequestData(lastRequest);
         setEditId(lastRequest.id);
         formik.setValues({
@@ -76,7 +76,7 @@ console.log(lastLeaveRequestData)
       console.error("Error fetching leave request:", error);
     }
   }
-  
+
   console.log("last State", lastLeaveRequestData)
   useEffect(() => {
     fetchLeaveData();
@@ -85,28 +85,29 @@ console.log(lastLeaveRequestData)
 
 
   useEffect(() => {
-  if (formik.values.startDate && formik.values.endDate) {
-    const start = new Date(formik.values.startDate);
-    const end = new Date(formik.values.endDate);
-    let days = 0;
+    if (formik.values.startDate && formik.values.endDate) {
+      const start = new Date(formik.values.startDate);
+      const end = new Date(formik.values.endDate);
 
-    // Clone the start date to avoid mutating it
-    let current = new Date(start);
+      let days = 0;
+      let current = new Date(start);
 
-    // Loop through each date in the range and count only non-Sundays
-    while (current <= end) {
-      if (current.getDay() !== 0) { // Exclude Sundays (0)
-        days++;
+      while (current <= end) {
+        const isSundayDay = current.getDay() === 0;
+        const isHolidayDay = isHoliday(current);
+
+        if (!isSundayDay && !isHolidayDay) {
+          days++;
+        }
+
+        current.setDate(current.getDate() + 1);
       }
-      current.setDate(current.getDate() + 1);
+
+      setNumberOfDays(days);
+      formik.setFieldValue("noOfDays", days);
     }
+  }, [formik.values.startDate, formik.values.endDate]);
 
-    setNumberOfDays(days);
-    formik.setFieldValue("noOfDays", days);
-  }
-}, [formik.values.startDate, formik.values.endDate]);
-
-  
 
   async function editLeaveRequest() {
     setConfirmationModal(false)
@@ -133,7 +134,7 @@ console.log(lastLeaveRequestData)
     <>
       <div className="ti-background-clr">
         {lastLeaveRequestData && Object.keys(lastLeaveRequestData).length > 0 ? (<div className="ti-leave-management-container  ">
-          <h5 className="text-center pt-4" style={{color:"white"}} >EDIT LEAVE REQUEST</h5>
+          <h5 className="text-center pt-4" style={{ color: "white" }} >EDIT LEAVE REQUEST</h5>
           <div className='bg-white  '>
 
             <div className="row ">

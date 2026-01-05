@@ -14,6 +14,7 @@ import { useNavigate } from "react-router-dom";
 import successCheck from "../../Image/checked.png";
 import checkedImage from "../../Image/checked.png";
 import { adminUrl, serverUrl } from "../../APIs/Base_UrL";
+import { isHoliday } from "../../../Utils/holidays";
 
 const AdminAddTimesheet = () => {
   const adminValue = useSelector((state) => state.adminLogin.value);
@@ -371,54 +372,14 @@ const AdminAddTimesheet = () => {
     loadSavedData();
   }, [selectedMonth]);
 
-
-
-
-
-  // const handleSaveTimesheetData = () => {
-  //   if (validateTimesheetData()) {
-  //     const formattedData = [];
-
-  //     // Populate formattedData with timesheet entries
-  //     timesheetData.forEach((entry) => {
-  //       const dateStr = entry.date.toISOString().split("T")[0]; // YYYY-MM-DD format
-  //       projectRows.forEach((row) => {
-  //         if (row.projectId) {
-  //           formattedData.push({
-  //             employeeId: adminId,
-  //             projectId: row.projectId,
-  //             date: dateStr,
-  //             hours: row.workHours?.[dateStr] || 0, // Default to 0 if no hours entered
-  //           });
-  //         }
-  //       });
-  //     });
-
-  //     // Update the state with saved work hours
-  //     setSavedWorkHours(formattedData);
-  //     // Save data to localStorage
-  //     const existingData = JSON.parse(localStorage.getItem(adminId)) || [];
-  //     localStorage.setItem(adminId, JSON.stringify([...existingData, formattedData]));
-  //     setSaveModalForTimesheet(true); // Display save success modal
-  //   }
-  // };
-
-
-
-
   const submitTimesheetData = async () => {
-    if (!validateTimesheetData()) {
-      return;
-    }
+    if (!validateTimesheetData()) return;
 
     setAddDataSubmitConfirmation(false);
 
     let formattedData = [];
-
     const dateFormatter = new Intl.DateTimeFormat("en-GB", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
+      year: "numeric", month: "2-digit", day: "2-digit",
     });
 
     timesheetData.forEach((entry) => {
@@ -438,43 +399,49 @@ const AdminAddTimesheet = () => {
       });
     });
 
-    console.log(formattedData); // Debugging
+    // 🚫 ❌ BLOCK SUBMISSION IF ANY HOLIDAY HAS HOURS
+    const holidayHoursFound = formattedData.some(entry => {
+      const d = new Date(entry.date);
+      return isHoliday(d) && entry.hours > 0;
+    });
 
+    if (holidayHoursFound) {
+      alert("❌ You cannot submit hours on HOLIDAYS. Please remove hours from holiday dates.");
+      return;
+    }
+
+    console.log("Submitting data:", formattedData);
+
+    // 🚀 API submission continues normally
     if (formattedData.length > 0) {
       try {
         const response = await axios.post(`${serverUrl}/working-hours`, formattedData);
 
         if (response.data) {
-          let updatedSubmittedDates = { ...submittedDates };
-          let updatedSubmittedHalf = { ...submittedHalf };
+          let updatedSubmitted = { ...submittedDates };
+          let updatedHalf = { ...submittedHalf };
 
           formattedData.forEach(entry => {
-            updatedSubmittedDates[entry.date] = true;
+            updatedSubmitted[entry.date] = true;
 
-            const day = parseInt(entry.date.split("-")[2], 10);
-            if (day >= 1 && day <= 15) {
-              updatedSubmittedHalf.firstHalf = true;
-            } else {
-              updatedSubmittedHalf.secondHalf = true;
-            }
+            const day = Number(entry.date.split("-")[2]);
+            if (day <= 15) updatedHalf.firstHalf = true;
+            else updatedHalf.secondHalf = true;
           });
 
-          setSubmittedDates(updatedSubmittedDates);
-          setSubmittedHalf(updatedSubmittedHalf);
+          setSubmittedDates(updatedSubmitted);
+          setSubmittedHalf(updatedHalf);
           setSuccessModalForTimesheet(true);
 
-          let receivedData = response.data;
-          let firstDate = receivedData[0].date;
-          let lastDate = receivedData[receivedData.length - 1].date;
-
-          setStartSubmitDate(firstDate);
-          setEndSubmitDate(lastDate);
+          const received = response.data;
+          setStartSubmitDate(received[0].date);
+          setEndSubmitDate(received[received.length - 1].date);
         }
       } catch (error) {
-        console.error("Error saving timesheet data:", error);
+        console.error("❌ Error saving timesheet:", error);
       }
     } else {
-      console.warn("No data to save.");
+      console.warn("⚠ No data to submit.");
     }
   };
 
@@ -604,7 +571,10 @@ const AdminAddTimesheet = () => {
                           <td
                             key={index}
                             style={{
-                              backgroundColor: entry?.date?.getDay() === 0 ? "gold" : "#c8e184",
+                              backgroundColor:
+                                isSunday(entry.date) ? "gold" :
+                                  isHoliday(entry.date) ? "#3498db" : "#c8e184",
+
                             }}
                           >
                             {
@@ -648,30 +618,44 @@ const AdminAddTimesheet = () => {
 
                           </td>
                           {
-                            timesheetData.map((entry, columnIndex) => (
-                              <td key={columnIndex} style={{ backgroundColor: "#e8fcaf" }}>
-                                <input
-                                  type="text"
-                                  inputMode="numeric"
-                                  className="AddTimesheet form-control my-3"
-                                  placeholder="0"
-                                  value={
-                                    project.workHours && project.workHours[entry.date.toISOString().split("T")[0]]
-                                      ? project.workHours[entry.date.toISOString().split("T")[0]]
-                                      : ""
-                                  }
-                                  disabled={submittedDates[entry.date.toISOString().split("T")[0]] || isSunday(entry.date)}  // ✅ Disables ONLY submitted work hours
-                                  onChange={(e) =>
-                                    handleWorkHoursChange(
-                                      rowIndex,
-                                      entry.date.toISOString().split("T")[0],
-                                      e.target.value
-                                    )
-                                  }
-                                />
-                              </td>
-                            ))
+                            timesheetData.map((entry, columnIndex) => {
+                              const dateStr = entry.date.toISOString().split("T")[0];
+
+                              const displayValue = isHoliday(dateStr)
+                                ? "Holiday"
+                                : isSunday(entry.date)
+                                  ? "0"
+                                  : project.workHours?.[dateStr] || "";
+
+                              return (
+                                <td key={columnIndex} style={{ backgroundColor: "#e8fcaf" }}>
+                                  <input
+                                    type="text"
+                                    inputMode="numeric"
+                                    className="AddTimesheet form-control my-3 text-center"
+                                    placeholder={isHoliday(dateStr) ? "Holiday" : "0"}
+                                    value={displayValue}
+                                    disabled={
+                                      isHoliday(dateStr) ||
+                                      isSunday(entry.date) ||
+                                      submittedDates[dateStr]
+                                    }
+                                    style={{
+                                      backgroundColor: isHoliday(dateStr) ? "#3498db" : isSunday(entry.date) ? "gold" : "#fff",
+                                      fontWeight: isHoliday(dateStr) ? "bold" : "normal",
+                                      color: isHoliday(dateStr) ? "#fff" : "#000",
+                                    }}
+                                    onChange={(e) =>
+                                      !isHoliday(dateStr) &&
+                                      !isSunday(entry.date) &&
+                                      handleWorkHoursChange(rowIndex, dateStr, e.target.value)
+                                    }
+                                  />
+                                </td>
+                              );
+                            })
                           }
+
                           <td style={{ backgroundColor: "#e8fcaf" }}>
                             <button
                               className="AddTimesheet btn btn-danger my-3"

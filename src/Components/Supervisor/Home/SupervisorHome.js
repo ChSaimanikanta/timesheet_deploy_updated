@@ -7,6 +7,7 @@ import { submitON, submitOFF } from "../../features/submitBtn";
 import { leaveSubmitON, leaveSubmitOFF } from "../../features/empLeaveSubmit";
 import axios from "axios";
 import { serverUrl, supervisorurl } from '../../APIs/Base_UrL'
+import { Button, Modal } from "react-bootstrap";
 
 
 function SupervisorHome() {
@@ -30,94 +31,96 @@ function SupervisorHome() {
   const [rejectLeave, setRejectLeave] = useState(0);
   const dispatch = useDispatch();
   const [leaveRequests, setLeaveRequests] = useState([]);
- 
 
-useEffect(() => {
-  async function fetchTimesheetData() {
-    if (!supervisorId) {
-      console.warn("Supervisor ID is missing.");
-      return;
-    }
+  // Cancel Leave Modal
+  const [showModal, setShowModal] = useState(false);
+  const [selectedLeaveId, setSelectedLeaveId] = useState(null);
+  useEffect(() => {
+    async function fetchTimesheetData() {
+      if (!supervisorId) {
+        console.warn("Supervisor ID is missing.");
+        return;
+      }
 
-    const formatDate = (date) => date.toLocaleDateString("en-CA");
+      const formatDate = (date) => date.toLocaleDateString("en-CA");
 
-    const today = new Date();
-    const ranges = [];
+      const today = new Date();
+      const ranges = [];
 
-    // Check both halves of the last 3 months (you can increase this range if needed)
-    for (let i = 0; i < 3; i++) {
-      const monthDate = new Date(today.getFullYear(), today.getMonth() - i, 1);
-      const year = monthDate.getFullYear();
-      const month = monthDate.getMonth();
+      // Check both halves of the last 3 months (you can increase this range if needed)
+      for (let i = 0; i < 3; i++) {
+        const monthDate = new Date(today.getFullYear(), today.getMonth() - i, 1);
+        const year = monthDate.getFullYear();
+        const month = monthDate.getMonth();
 
-      const firstHalfStart = new Date(year, month, 1);
-      const firstHalfEnd = new Date(year, month, 15, 23, 59, 59, 999);
-      const secondHalfStart = new Date(year, month, 16);
-      const secondHalfEnd = new Date(year, month + 1, 0, 23, 59, 59, 999);
+        const firstHalfStart = new Date(year, month, 1);
+        const firstHalfEnd = new Date(year, month, 15, 23, 59, 59, 999);
+        const secondHalfStart = new Date(year, month, 16);
+        const secondHalfEnd = new Date(year, month + 1, 0, 23, 59, 59, 999);
 
-      ranges.push(
-        {
-          label: "Second Half",
-          startDate: formatDate(secondHalfStart),
-          endDate: formatDate(secondHalfEnd),
-        },
-        {
-          label: "First Half",
-          startDate: formatDate(firstHalfStart),
-          endDate: formatDate(firstHalfEnd),
-        }
-      );
-    }
-
-    let foundData = null;
-
-    for (const range of ranges) {
-      try {
-        const response = await axios.get(
-          `${serverUrl}/sup/api/working-hours/${supervisorId}/range`,
+        ranges.push(
           {
-            params: {
-              startDate: range.startDate,
-              endDate: range.endDate,
-            },
+            label: "Second Half",
+            startDate: formatDate(secondHalfStart),
+            endDate: formatDate(secondHalfEnd),
+          },
+          {
+            label: "First Half",
+            startDate: formatDate(firstHalfStart),
+            endDate: formatDate(firstHalfEnd),
           }
         );
+      }
 
-        if (response.data && response.data.length > 0) {
-          foundData = {
-            data: response.data,
-            label: range.label,
-          };
-          break; // Stop at the first valid submission found
+      let foundData = null;
+
+      for (const range of ranges) {
+        try {
+          const response = await axios.get(
+            `${serverUrl}/sup/api/working-hours/${supervisorId}/range`,
+            {
+              params: {
+                startDate: range.startDate,
+                endDate: range.endDate,
+              },
+            }
+          );
+
+          if (response.data && response.data.length > 0) {
+            foundData = {
+              data: response.data,
+              label: range.label,
+            };
+            break; // Stop at the first valid submission found
+          }
+        } catch (error) {
+          console.error(`Error fetching ${range.label} timesheet:`, error);
         }
-      } catch (error) {
-        console.error(`Error fetching ${range.label} timesheet:`, error);
       }
-    }
 
-    if (foundData) {
-      const sortedData = foundData.data.sort((a, b) => new Date(a.date) - new Date(b.date));
-      const firstDate = sortedData[0].date;
-      const lastDate = sortedData[sortedData.length - 1].date;
+      if (foundData) {
+        const sortedData = foundData.data.sort((a, b) => new Date(a.date) - new Date(b.date));
+        const firstDate = sortedData[0].date;
+        const lastDate = sortedData[sortedData.length - 1].date;
 
-      setStartSubmitDate(firstDate);
-      setEndSubmitDate(lastDate);
-      setSubmitSupervisorId(sortedData[0].employeeId);
-      setStatusValue(sortedData[0].status);
+        setStartSubmitDate(firstDate);
+        setEndSubmitDate(lastDate);
+        setSubmitSupervisorId(sortedData[0].employeeId);
+        setStatusValue(sortedData[0].status);
 
-      const status = sortedData[0].status;
-      if (status === "APPROVED" || status === "REJECTED") {
-        dispatch(submitOFF(false));
+        const status = sortedData[0].status;
+        if (status === "APPROVED" || status === "REJECTED") {
+          dispatch(submitOFF(false));
+        } else {
+          dispatch(submitON(true));
+        }
       } else {
-        dispatch(submitON(true));
+        setStatusValue("No Data Submitted");
       }
-    } else {
-      setStatusValue("No Data Submitted");
     }
-  }
 
-  fetchTimesheetData();
-}, [supervisorId, dispatch, serverUrl]);
+    fetchTimesheetData();
+  }, [supervisorId, dispatch, serverUrl]);
 
 
   console.log(startSubmitDate);
@@ -126,43 +129,65 @@ useEffect(() => {
 
 
 
- 
 
 
-useEffect(() => {
-  async function fetchLeaveRequests() {
-    if (!supervisorId) {
-      console.warn("Supervisor ID is missing for leave request fetch.");
-      return;
+
+  useEffect(() => {
+    async function fetchLeaveRequests() {
+      if (!supervisorId) {
+        console.warn("Supervisor ID is missing for leave request fetch.");
+        return;
+      }
+
+      try {
+        let response = await axios.get(`${serverUrl}/supervisor/leave-requests/${supervisorId}`);
+        let data = response.data;
+
+        const currentDate = new Date();
+        const filteredLeaveRequests = data.filter(request => {
+          const requestEndDate = new Date(request.endDate);
+          return (
+            requestEndDate.getFullYear() > currentDate.getFullYear() ||
+            (requestEndDate.getFullYear() === currentDate.getFullYear() &&
+              requestEndDate.getMonth() > currentDate.getMonth()) ||
+            (requestEndDate.getFullYear() === currentDate.getFullYear() &&
+              requestEndDate.getMonth() === currentDate.getMonth() &&
+              requestEndDate.getDate() >= currentDate.getDate())
+          );
+        });
+
+        setLeaveRequests(filteredLeaveRequests);
+      } catch (error) {
+        console.error("Error fetching filtered leave requests:", error);
+      }
     }
 
+    fetchLeaveRequests();
+  }, [supervisorId]);
+
+  // Open modal with selected leave ID
+  /* ------------------ CANCEL LEAVE ------------------ */
+
+  const handleCancelClick = (id) => {
+    setSelectedLeaveId(id);
+    setShowModal(true);
+  };
+
+  const confirmCancelLeave = async () => {
     try {
-      let response = await axios.get(`${serverUrl}/supervisor/leave-requests/${supervisorId}`);
-      let data = response.data;
+      await axios.delete(
+        `${serverUrl}/supervisor/leave-requests/${selectedLeaveId}`
+      );
 
-      const currentDate = new Date();
-      const filteredLeaveRequests = data.filter(request => {
-        const requestEndDate = new Date(request.endDate);
-        return (
-          requestEndDate.getFullYear() > currentDate.getFullYear() ||
-          (requestEndDate.getFullYear() === currentDate.getFullYear() &&
-            requestEndDate.getMonth() > currentDate.getMonth()) ||
-          (requestEndDate.getFullYear() === currentDate.getFullYear() &&
-            requestEndDate.getMonth() === currentDate.getMonth() &&
-            requestEndDate.getDate() >= currentDate.getDate())
-        );
-      });
+      setLeaveRequests((prev) =>
+        prev.filter((leave) => leave.id !== selectedLeaveId)
+      );
 
-      setLeaveRequests(filteredLeaveRequests);
+      setShowModal(false);
     } catch (error) {
-      console.error("Error fetching filtered leave requests:", error);
+      console.error("Cancel leave failed:", error);
     }
-  }
-
-  fetchLeaveRequests();
-}, [supervisorId]);
-
-
+  };
   return (
     <>
       <div className="ti-background-clr">
@@ -242,19 +267,7 @@ useEffect(() => {
           </div>
 
           <div className="right-details">
-            {/* notification about timesheet */}
-            {/* <div className="row text-center ti-home-notification">
-
-                            <div className="col   mx-5 my-2 p-2 ">Timesheet to be approved : {countTimesheet}</div>
-                            <div className="col  mx-5  my-2 p-2  ">Rejected Timesheets : {rejectTimesheetCount}</div>
-
-                        </div>
-                        <div className="row text-center ti-home-notification">
-                            <div className="col   mx-5 my-2 p-2 ">Leaves to be approved : {leavePending}</div>
-                            <div className="col  mx-5  my-2 p-2  ">Rejected Leave Request : {rejectLeave}</div>
-                        </div> */}
-
-            <div className="row text-center ti-home-content mt-2">
+                        <div className="row text-center ti-home-content mt-2">
               {/* timesheet status */}
               <div className="col mx-5 my-2 p-2 ">
                 <p className="p-2 title">Your Submitted Timesheet</p>
@@ -330,6 +343,29 @@ useEffect(() => {
                           >
                             {leave.status}
                           </button>
+                          {/* Cancel Button - Only when status is PENDING */}
+                          {leave.status === "PENDING" && (
+                            <button
+                              className="cancel-btn"
+                              style={{
+                                backgroundColor: "red",
+                                color: "white",
+                                height: "30px",
+                                width: "120px",
+                                border: "none",
+                                borderRadius: "4px",
+                                cursor: "pointer",
+                                padding: "0 10px",
+                                fontSize: "12px",
+                                display: "flex",
+                                justifyContent: "center",
+                                alignItems: "center",
+                              }}
+                              onClick={() => handleCancelClick(leave.id)}
+                            >
+                              Cancel Request
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -342,6 +378,18 @@ useEffect(() => {
           </div>
         </div>
       </div>
+      {/* CANCEL MODAL */}
+      <Modal show={showModal} onHide={() => setShowModal(false)}>
+        <Modal.Body>Are you sure you want to cancel this leave?</Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowModal(false)}>
+            No
+          </Button>
+          <Button variant="danger" onClick={confirmCancelLeave}>
+            Yes, Cancel
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </>
   );
 }
