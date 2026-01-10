@@ -33,68 +33,69 @@ function AdminHome() {
   const [rejectLeave, setRejectLeave] = useState(0);
   const dispatch = useDispatch();
   const [leaveRequests, setLeaveRequests] = useState([]);
-    const [calendarImage, setCalendarImage] = useState(null);
+  const [calendarImage, setCalendarImage] = useState(null);
   const [isOpenEmployeeManagement, setIsOpenEmployeeManagement] =
     useState(false);
   const [isOpenProjectManagement, setIsOpenProjectManagement] = useState(false);
+const [showModal, setShowModal] = useState(false);
+  const [selectedId, setSelectedId] = useState(null);
+  // Fetch timesheet submission data dynamically
+  // Fetch timesheet submission data dynamically
+  useEffect(() => {
+    async function fetchTimesheetData() {
+      if (!adminId) {
+        console.warn("Admin ID is missing.");
+        return;
+      }
 
-// Fetch timesheet submission data dynamically
-// Fetch timesheet submission data dynamically
-useEffect(() => {
-async function fetchTimesheetData() {
-  if (!adminId) {
-    console.warn("Admin ID is missing.");
-    return;
-  }
+      try {
+        const response = await axios.get(`${serverUrl}/working-hours/${adminId}`);
+        const allData = response.data || [];
 
-  try {
-    const response = await axios.get(`${serverUrl}/working-hours/${adminId}`);
-    const allData = response.data || [];
+        if (allData.length === 0) {
+          setStatusValue("No Data Submitted");
+          return;
+        }
 
-    if (allData.length === 0) {
-      setStatusValue("No Data Submitted");
-      return;
+        // Sort by date descending to get the latest submission
+        const sortedData = allData.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        const latestDate = sortedData[0].date;
+        const latestMonth = new Date(latestDate).getMonth();
+        const latestYear = new Date(latestDate).getFullYear();
+
+        // Filter only entries from the same half of that month
+        const isSecondHalf = new Date(latestDate).getDate() >= 16;
+        const filteredData = sortedData.filter((entry) => {
+          const entryDate = new Date(entry.date);
+          return (
+            entryDate.getMonth() === latestMonth &&
+            entryDate.getFullYear() === latestYear &&
+            (isSecondHalf ? entryDate.getDate() >= 16 : entryDate.getDate() <= 15)
+          );
+        });
+
+        const firstDate = filteredData[filteredData.length - 1].date;
+        const lastDate = filteredData[0].date;
+
+        setStartSubmitDate(firstDate);
+        setEndSubmitDate(lastDate);
+        setSubmitAdminId(filteredData[0].employeeId);
+        setStatusValue(filteredData[0].status);
+
+        if (filteredData[0].status === "APPROVED" || filteredData[0].status === "REJECTED") {
+          dispatch(submitAdminOFF(false));
+        } else {
+          dispatch(submitAdminON(true));
+        }
+      } catch (error) {
+        console.error("Error fetching timesheet data:", error);
+      }
     }
 
-    // Sort by date descending to get the latest submission
-    const sortedData = allData.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-    const latestDate = sortedData[0].date;
-    const latestMonth = new Date(latestDate).getMonth();
-    const latestYear = new Date(latestDate).getFullYear();
-
-    // Filter only entries from the same half of that month
-    const isSecondHalf = new Date(latestDate).getDate() >= 16;
-    const filteredData = sortedData.filter((entry) => {
-      const entryDate = new Date(entry.date);
-      return (
-        entryDate.getMonth() === latestMonth &&
-        entryDate.getFullYear() === latestYear &&
-        (isSecondHalf ? entryDate.getDate() >= 16 : entryDate.getDate() <= 15)
-      );
-    });
-
-    const firstDate = filteredData[filteredData.length - 1].date;
-    const lastDate = filteredData[0].date;
-
-    setStartSubmitDate(firstDate);
-    setEndSubmitDate(lastDate);
-    setSubmitAdminId(filteredData[0].employeeId);
-    setStatusValue(filteredData[0].status);
-
-    if (filteredData[0].status === "APPROVED" || filteredData[0].status === "REJECTED") {
-      dispatch(submitAdminOFF(false));
-    } else {
-      dispatch(submitAdminON(true));
-    }
-  } catch (error) {
-    console.error("Error fetching timesheet data:", error);
-  }
-}
-
-
-  fetchTimesheetData();
-}, [adminId, dispatch, serverUrl]);
+    fetchTimesheetData();
+  }, [adminId, dispatch, serverUrl]);
 
 
   // Fetch leave requests
@@ -120,6 +121,40 @@ async function fetchTimesheetData() {
     fetchLeaveRequests();
   }, []);
 
+  const handleCancelClick = (id) => {
+    setSelectedId(id);
+    setShowModal(true);
+  };
+  
+  // Cancel confirmation logic
+  const handleConfirmCancel = () => {
+    fetch(`${serverUrl}/leaverequests/${selectedId}`, {
+      method: "DELETE",
+    })
+      .then((response) => {
+        if (response.ok) {
+          // alert("Leave request cancelled successfully.");
+          setLeaveRequests((prev) => prev.filter((leave) => leave.id !== selectedId));
+        } else {
+          return response.json().then((error) => {
+            alert(`Failed to cancel: ${error.message || "Unexpected error."}`);
+          });
+        }
+      })
+      .catch((err) => {
+        console.error("Cancel error:", err);
+        alert("Something went wrong while cancelling.");
+      })
+      .finally(() => {
+        setShowModal(false);
+        setSelectedId(null);
+      });
+  };
+
+  const handleModalClose = () => {
+    setShowModal(false);
+    setSelectedId(null);
+  };
 
   return (
     <>
@@ -244,7 +279,7 @@ async function fetchTimesheetData() {
                 </div>
               )}
             </div>
-  {/* HOLIDAY CALENDAR */}
+            {/* HOLIDAY CALENDAR */}
             <div className="collapse-content">
               <ul>
                 <button className="btn btn-outline-primary w-100 mb-2"
@@ -263,8 +298,8 @@ async function fetchTimesheetData() {
           </div>
 
           <div className="right-details">
-          
-  {calendarImage ? (
+
+            {calendarImage ? (
               // SHOW CALENDAR IMAGE VIEW
               <div className="position-relative p-3"
                 style={{ background: "#fff", borderRadius: "8px", minHeight: "85vh" }}>
@@ -284,92 +319,163 @@ async function fetchTimesheetData() {
               </div>
 
             ) : (
-            <div className="row text-center ti-home-content mt-2">
-              {/* timesheet status */}
-              <div className="col mx-5 my-2 p-2 ">
-                <p className="p-2 title">Your Submitted Timesheet</p>
-                <div className="body   p-2 text-start">
-                  <div className="m-4 ti-home-ti-status p-4">
-                    <h5 className=""> Timesheet Period </h5>
+              <div className="row text-center ti-home-content mt-2">
+                {/* timesheet status */}
+                <div className="col mx-5 my-2 p-2 ">
+                  <p className="p-2 title">Your Submitted Timesheet</p>
+                  <div className="body   p-2 text-start">
+                    <div className="m-4 ti-home-ti-status p-4">
+                      <h5 className=""> Timesheet Period </h5>
 
-                    <div className="d-flex flex-column ms-4">
-                      <div className="d-flex align-items-center mb-2">
-                        <p className="mb-0 me-2">Start date :</p>
-                        <p className="mb-0">{startSubmitDate}</p>
-                      </div>
-                      <div className="d-flex align-items-center mb-2">
-                        <p className="mb-0 me-2">End date :</p>
-                        <p className="mb-0">{endSubmitDate}</p>
-                      </div>
+                      <div className="d-flex flex-column ms-4">
+                        <div className="d-flex align-items-center mb-2">
+                          <p className="mb-0 me-2">Start date :</p>
+                          <p className="mb-0">{startSubmitDate}</p>
+                        </div>
+                        <div className="d-flex align-items-center mb-2">
+                          <p className="mb-0 me-2">End date :</p>
+                          <p className="mb-0">{endSubmitDate}</p>
+                        </div>
 
-                      <div className="d-flex align-items-center">
-                        <p className="mb-0 me-2">STATUS :</p>
-                        {statusValue && (
-                          <button
-                            className="view-btn p-2"
-                            style={{
-                              backgroundColor:
-                                statusValue === "APPROVED"
-                                  ? "green"
-                                  : statusValue === "REJECTED"
-                                    ? "red"
-                                    : "blue",
-                              color: "white", // Set the text color to white for better visibility
-                              cursor: "default",
-                            }}
-                          >
-                            {statusValue}
-                          </button>
-                        )}
+                        <div className="d-flex align-items-center">
+                          <p className="mb-0 me-2">STATUS :</p>
+                          {statusValue && (
+                            <button
+                              className="view-btn p-2"
+                              style={{
+                                backgroundColor:
+                                  statusValue === "APPROVED"
+                                    ? "green"
+                                    : statusValue === "REJECTED"
+                                      ? "red"
+                                      : "blue",
+                                color: "white", // Set the text color to white for better visibility
+                                cursor: "default",
+                              }}
+                            >
+                              {statusValue}
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="col mx-5 my-2 p-2">
-                <p className="p-2 title">Your Requested Leaves</p>
-                <div className="body p-2 text-start">
-                  {leaveRequests.map((leave, index) => (
-                    <div key={index} className="m-4 ti-home-ti-status p-4">
-                      <h5>Leave Request Period</h5>
-                      <div className="d-flex flex-column ms-4">
-                        <div className="d-flex align-items-center mb-2">
-                          <p className="mb-0 me-2">Start date:</p>
-                          <p className="mb-0">{leave.startDate}</p>
+                <div className="col mx-5 my-2 p-2">
+                  <p className="p-2 title">Your Requested Leaves</p>
+                  <div className="body p-2 text-start">
+                    {leaveRequests.map((leave, index) => (
+                      <div key={index} className="m-4 ti-home-ti-status p-4">
+                        <h5>Leave Request Period</h5>
+                        <div className="d-flex flex-column ms-4">
+                          <div className="d-flex align-items-center mb-2">
+                            <p className="mb-0 me-2">Start date:</p>
+                            <p className="mb-0">{leave.startDate}</p>
+                          </div>
+                          <div className="d-flex align-items-center mb-2">
+                            <p className="mb-0 me-2">End date:</p>
+                            <p className="mb-0">{leave.endDate}</p>
+                          </div>
+                          <div className="d-flex align-items-center mb-2">
+                            <p className="mb-0 me-2">Number of Days:</p>
+                            <p className="mb-0">{leave.noOfDays}</p>
+                          </div>
+                          <div style={{ backgroundColor: "#d5d8f6", padding: "5px", borderRadius: "8px" }}>
+                            <div className="d-flex align-items-center mb-2">
+                              {/* STATUS Label */}
+                              <p className="mb-0 me-2" style={{ fontSize: "14px", color: "#555" }}>
+                                <strong>STATUS:</strong>
+                              </p>
+
+                              {/* Buttons in one line */}
+                              <div className="d-flex gap-3 align-items-center">
+                                {/* Status Button */}
+                                <button
+                                  className="view-btn"
+                                  style={{
+                                    backgroundColor:
+                                      leave.status === "APPROVED"
+                                        ? "green"
+                                        : leave.status === "REJECTED"
+                                          ? "red"
+                                          : "blue",
+                                    color: "white",
+                                    height: "30px",
+                                    width: "120px",
+                                    border: "none",
+                                    borderRadius: "4px",
+                                    padding: "0 10px",
+                                    fontSize: "14px",
+                                    display: "flex",
+                                    justifyContent: "center",
+                                    alignItems: "center",
+                                    cursor: "default", // 👈 This makes the arrow appear on hover
+                                  }}
+                                >
+                                  {leave.status}
+                                </button>
+
+
+                                {/* Cancel Button - Only when status is PENDING */}
+                                {leave.status === "PENDING" && (
+                                  <button
+                                    className="cancel-btn"
+                                    style={{
+                                      backgroundColor: "red",
+                                      color: "white",
+                                      height: "30px",
+                                      width: "120px",
+                                      border: "none",
+                                      borderRadius: "4px",
+                                      cursor: "pointer",
+                                      padding: "0 10px",
+                                      fontSize: "12px",
+                                      display: "flex",
+                                      justifyContent: "center",
+                                      alignItems: "center",
+                                    }}
+                                    onClick={() => handleCancelClick(leave.id)}
+                                  >
+                                    Cancel Request
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                        <div className="d-flex align-items-center mb-2">
-                          <p className="mb-0 me-2">End date:</p>
-                          <p className="mb-0">{leave.endDate}</p>
-                        </div>
-                        <div className="d-flex align-items-center mb-2">
-                          <p className="mb-0 me-2">Number of Days:</p>
-                          <p className="mb-0">{leave.noOfDays}</p>
-                        </div>
-                        <div className="d-flex align-items-center">
-                          <p className="mb-0 me-2">STATUS:</p>
-                          <button
-                            className="view-btn p-2"
-                            style={{
-                              backgroundColor:
-                                leave.status === "APPROVED"
-                                  ? "green"
-                                  : leave.status === "REJECTED"
-                                    ? "red"
-                                    : "blue",
-                              color: "white",
-                            }}
-                          >
-                            {leave.status}
-                          </button>
+                      </div>
+                    ))}
+
+                  </div>
+                </div>
+
+                
+                  {/* Modal for confirmation */}
+                  {showModal && (
+                    <div className="modal d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+                      <div className="modal-dialog modal-dialog-centered">
+                        <div className="modal-content">
+                          <div className="modal-header">
+                            <h5 className="modal-title">Cancel Leave Request</h5>
+                            <button type="button" className="btn-close" onClick={handleModalClose}></button>
+                          </div>
+                          <div className="modal-body">
+                            <p>Are you sure you want to cancel this leave request?</p>
+                          </div>
+                          <div className="modal-footer">
+                            <button className="btn btn-secondary" onClick={handleModalClose}>
+                              Close
+                            </button>
+                            <button className="btn btn-danger" onClick={handleConfirmCancel}>
+                              Confirm Cancellation
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  ))}
-
-                </div>
+                  )}
               </div>
-            </div>
             )}
           </div>
 

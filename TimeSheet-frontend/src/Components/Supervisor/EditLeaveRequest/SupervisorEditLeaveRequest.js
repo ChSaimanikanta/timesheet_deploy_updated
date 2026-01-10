@@ -3,13 +3,13 @@ import { useFormik } from "formik";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { schemaLeave } from "./LeaveSchema";
+import leaveUrl from "../../Api/leaveRequest";
 import { Modal, Button } from "react-bootstrap";
 import successCheck from "../../Image/checked.png";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { serverUrl } from "../../APIs/Base_UrL";
-import { isHoliday } from "../../../Utils/holidays";
+import { serverUrl, supervisorurl } from "../../APIs/Base_UrL";
 
 function SupervisorEditLeaveRequest() {
   const [lastLeaveRequestData, setLastLeaveRequestData] = useState({});
@@ -88,18 +88,16 @@ function SupervisorEditLeaveRequest() {
     if (formik.values.startDate && formik.values.endDate) {
       const start = new Date(formik.values.startDate);
       const end = new Date(formik.values.endDate);
-
       let days = 0;
+
+      // Clone the start date to avoid mutating it
       let current = new Date(start);
 
+      // Loop through each date in the range and count only non-Sundays
       while (current <= end) {
-        const isSundayDay = current.getDay() === 0;
-        const isHolidayDay = isHoliday(current);
-
-        if (!isSundayDay && !isHolidayDay) {
+        if (current.getDay() !== 0) { // Exclude Sundays (0)
           days++;
         }
-
         current.setDate(current.getDate() + 1);
       }
 
@@ -107,6 +105,7 @@ function SupervisorEditLeaveRequest() {
       formik.setFieldValue("noOfDays", days);
     }
   }, [formik.values.startDate, formik.values.endDate]);
+
 
 
   async function editLeaveRequest() {
