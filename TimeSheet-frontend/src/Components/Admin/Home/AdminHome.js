@@ -33,6 +33,7 @@ function AdminHome() {
   const [rejectLeave, setRejectLeave] = useState(0);
   const dispatch = useDispatch();
   const [leaveRequests, setLeaveRequests] = useState([]);
+    const [calendarImage, setCalendarImage] = useState(null);
   const [isOpenEmployeeManagement, setIsOpenEmployeeManagement] =
     useState(false);
   const [isOpenProjectManagement, setIsOpenProjectManagement] = useState(false);
@@ -243,26 +244,46 @@ async function fetchTimesheetData() {
                 </div>
               )}
             </div>
+  {/* HOLIDAY CALENDAR */}
+            <div className="collapse-content">
+              <ul>
+                <button className="btn btn-outline-primary w-100 mb-2"
+                  onClick={() => setCalendarImage("/hyd-calender-2026.png")}>
+                  Hyderabad Holiday Calendar
+                </button>
+              </ul>
+              <ul>
+                <button className="btn btn-outline-success w-100"
+                  onClick={() => setCalendarImage("/coimbatore-calender-2026.png")}>
+                  Coimbatore Holiday Calendar
+                </button>
+              </ul>
+            </div>
+
           </div>
 
           <div className="right-details">
-            {/* <div className="row text-center ti-home-notification">
-              <div className="col   mx-5 my-2 p-2 ">
-                Timesheet to be approved : {countTimesheet}
-              </div>
-              <div className="col  mx-5  my-2 p-2  ">Rejected Timesheets : {rejectTimesheetCount}</div>
-            </div> */}
+          
+  {calendarImage ? (
+              // SHOW CALENDAR IMAGE VIEW
+              <div className="position-relative p-3"
+                style={{ background: "#fff", borderRadius: "8px", minHeight: "85vh" }}>
 
-            {/* notification about leave  */}
-            {/* <div className="row text-center ti-home-notification">
-              <div className="col   mx-5 my-2 p-2 ">
-                Leaves to be approved : {leavePending}
-              </div>
-              <div className="col  mx-5  my-2 p-2  "> */}
-            {/* Rejected Leave Request : {rejectLeave} */}
-            {/* </div> */}
-            {/* </div> */}
+                <button className="btn btn-primary position-absolute"
+                  style={{ top: "10px", right: "10px" }}
+                  onClick={() => setCalendarImage(null)}>
+                  Back
+                </button>
 
+                <div className="d-flex justify-content-center align-items-center h-100">
+                  <img src={calendarImage} alt="Holiday Calendar"
+                    className="img-fluid"
+                    style={{ maxHeight: "80vh", objectFit: "contain" }} />
+                </div>
+
+              </div>
+
+            ) : (
             <div className="row text-center ti-home-content mt-2">
               {/* timesheet status */}
               <div className="col mx-5 my-2 p-2 ">
@@ -349,7 +370,12 @@ async function fetchTimesheetData() {
                 </div>
               </div>
             </div>
+            )}
           </div>
+
+
+
+
         </div>
       </div>
     </>
