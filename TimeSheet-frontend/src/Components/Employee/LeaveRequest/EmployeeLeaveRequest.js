@@ -11,15 +11,15 @@ import { schemaLeave } from "./EmployeeLeaveSchema";
 import { leaveSubmitON } from "../../features/empLeaveSubmit";
 import "./EmployeeLeaveRequest.css";
 import { leaveRequest_Url, serverUrl } from "../../APIs/Base_UrL";
-import { getValidLeaveDays } from "../../../Utils/holidays";
 
 export function EmployeeLeaveRequest() {
-   const employeeValue = useSelector((state) => state.employeeLogin.value);
+  const employeeValue = useSelector((state) => state.employeeLogin.value);
   const employeeId = employeeValue.employeeId;
 
   const [leaveSuccessModal, setLeaveSuccessModal] = useState(false);
+  const [numberOfDays, setNumberOfDays] = useState(0);
   const [approvedLeaveCount, setApprovedLeaveCount] = useState(0);
-  const [totalLeaves] = useState(18);
+  const [totalLeaves, setTotalLeaves] = useState(18);
   const [pendingLeaves, setPendingLeaves] = useState(0);
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -27,7 +27,13 @@ export function EmployeeLeaveRequest() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  /* ---------------- FETCH APPROVED LEAVES ---------------- */
+  // Function to calculate pending leaves
+  const calculatePendingLeaves = () => {
+    const count = totalLeaves - approvedLeaveCount;
+    setPendingLeaves(count);
+  };
+
+  // Function to filter approved leaves for the current year
   const calculateApprovedLeave = async () => {
     try {
       const response = await axios.get(
@@ -35,13 +41,13 @@ export function EmployeeLeaveRequest() {
       );
 
       const currentYear = new Date().getFullYear();
+      const allLeaves = response.data;
 
-      const approvedDays = response.data
-        .filter(
-          (leave) =>
-            leave.status === "APPROVED" &&
-            new Date(leave.startDate).getFullYear() === currentYear
-        )
+      const approvedDays = allLeaves
+        .filter((leave) => {
+          const leaveYear = new Date(leave.startDate).getFullYear();
+          return leave.status === "APPROVED" && leaveYear === currentYear;
+        })
         .reduce((sum, leave) => sum + leave.noOfDays, 0);
 
       setApprovedLeaveCount(approvedDays);
@@ -55,15 +61,15 @@ export function EmployeeLeaveRequest() {
   }, []);
 
   useEffect(() => {
-    setPendingLeaves(totalLeaves - approvedLeaveCount);
+    calculatePendingLeaves();
   }, [approvedLeaveCount, totalLeaves]);
 
-  /* ---------------- FORM ---------------- */
+  // Automatically calculate number of leave days
   const formik = useFormik({
     initialValues: {
       employeeId,
-      startDate: "",
-      endDate: "",
+      startDate: "", // Empty by default
+      endDate: "", // Empty by default
       noOfDays: 0,
       reason: "",
       comments: "",
@@ -71,54 +77,71 @@ export function EmployeeLeaveRequest() {
     validationSchema: schemaLeave,
     onSubmit: async (values) => {
       try {
-        if (values.noOfDays === 0) {
-          setErrorMessage(
-            "❌ You cannot apply leave only on holidays or Sundays."
-          );
+        const requestedDays = values.noOfDays;
+
+        if (requestedDays > pendingLeaves) {
+          setErrorMessage(`You requested ${requestedDays} days, but only ${pendingLeaves} are available.`);
           setShowErrorModal(true);
           return;
         }
 
-        if (values.noOfDays > pendingLeaves) {
-          setErrorMessage(
-            `❌ You requested ${values.noOfDays} days, but only ${pendingLeaves} are available.`
-          );
+        const response = await axios.post(`${serverUrl}/leaverequests`, values);
+
+        if (response.data?.error) {
+          setErrorMessage(response.data.error);
           setShowErrorModal(true);
           return;
         }
-
-        await axios.post(`${serverUrl}/leaverequests`, values);
 
         setLeaveSuccessModal(true);
+        setTotalLeaves((prev) => prev - requestedDays);
+        localStorage.setItem(`leaveObjectId${employeeId}`, response.data.id);
         dispatch(leaveSubmitON(true));
         formik.resetForm();
+
       } catch (error) {
-        setErrorMessage(
-          error.response?.data?.error ||
-            "Something went wrong. Please try again."
-        );
-        setShowErrorModal(true);
+        if (error.response && error.response.status === 422) {
+          const serverMessage = error.response.data?.error || "Request could not be processed.";
+          setErrorMessage(serverMessage);
+          setShowErrorModal(true);
+        } else {
+          console.error("Unexpected error:", error);
+          setErrorMessage("Something went wrong while submitting your leave. Please try again.");
+          setShowErrorModal(true);
+        }
       }
     },
   });
 
-  /* ---------------- AUTO CALCULATE LEAVE DAYS ---------------- */
   useEffect(() => {
     if (formik.values.startDate && formik.values.endDate) {
-      const days = getValidLeaveDays(
-        formik.values.startDate,
-        formik.values.endDate
-      );
+      const start = new Date(formik.values.startDate);
+      const end = new Date(formik.values.endDate);
+      let days = 0;
+
+      // Clone the start date to avoid mutating it
+      let current = new Date(start);
+
+      // Loop through each date in the range and count only non-Sundays
+      while (current <= end) {
+        if (current.getDay() !== 0) { // Exclude Sundays (0)
+          days++;
+        }
+        current.setDate(current.getDate() + 1);
+      }
+
+      setNumberOfDays(days);
       formik.setFieldValue("noOfDays", days);
     }
   }, [formik.values.startDate, formik.values.endDate]);
-  
+
+
   return (
     <>
       <div className="ti-background-clr">
-        <h5 className="text-center pt-4" style={{color:"white"}}>LEAVE REQUEST</h5>
+        <h5 className="text-center pt-4" style={{ color: "white" }}>LEAVE REQUEST</h5>
         <div className="ti-leave-management-container">
-          <h5 style={{color:"white"}}>YOUR AVAILABLE LEAVES: {pendingLeaves}</h5>
+          <h5 style={{ color: "white" }}>YOUR AVAILABLE LEAVES: {pendingLeaves}</h5>
           <div className="bg-white">
             <div className="row">
               <div className="col">
@@ -155,7 +178,7 @@ export function EmployeeLeaveRequest() {
                         )}
                       </div>
                     </div>
-  
+
                     <div className="my-3 leave-row">
                       <label>
                         End Date<span style={{ color: "red" }}>*</span> :
@@ -187,7 +210,7 @@ export function EmployeeLeaveRequest() {
                         )}
                       </div>
                     </div>
-  
+
                     <div className="my-3 leave-row">
                       <label>No Of Days:</label>
                       <input
@@ -197,7 +220,7 @@ export function EmployeeLeaveRequest() {
                         value={formik.values.noOfDays}
                       />
                     </div>
-  
+
                     <div className="my-3 leave-row">
                       <label>
                         Reason<span style={{ color: "red" }}>*</span> :
@@ -223,10 +246,10 @@ export function EmployeeLeaveRequest() {
                         )}
                       </div>
                     </div>
-  
+
                     <div className="my-3 leave-row">
                       <label>
-                       Comments  <span style={{ color: "red" }}>*</span>:
+                        Comments  <span style={{ color: "red" }}>*</span>:
                       </label>
                       <div style={{ flex: 2 }}>
                         <textarea
@@ -242,7 +265,7 @@ export function EmployeeLeaveRequest() {
                         )}
                       </div>
                     </div>
-  
+
                     <div className="my-5 text-end">
                       <button
                         type="submit"
@@ -268,53 +291,52 @@ export function EmployeeLeaveRequest() {
               </div>
             </div>
           </div>
-         <Modal
-  className="custom-modal"
-  style={{ left: "50%", transform: "translateX(-50%)" }}
-  dialogClassName="modal-dialog-centered"
-  show={leaveSuccessModal || showErrorModal}
-  onHide={() => {
-    setLeaveSuccessModal(false);
-    setShowErrorModal(false);
-  }}
->
-  <div
-    className={`d-flex flex-column p-4 align-items-center ${
-      leaveSuccessModal ? "modal-success" : "modal-error"
-    }`}
-  >
-    {leaveSuccessModal && (
-      <>
-        <img
-          src={successCheck}
-          className="img-fluid mb-4"
-          alt="successCheck"
-        />
-        <p className="mb-4 text-center">
-          Your Leave Request Submitted Successfully
-        </p>
-      </>
-    )}
+          <Modal
+            className="custom-modal"
+            style={{ left: "50%", transform: "translateX(-50%)" }}
+            dialogClassName="modal-dialog-centered"
+            show={leaveSuccessModal || showErrorModal}
+            onHide={() => {
+              setLeaveSuccessModal(false);
+              setShowErrorModal(false);
+            }}
+          >
+            <div
+              className={`d-flex flex-column p-4 align-items-center ${leaveSuccessModal ? "modal-success" : "modal-error"
+                }`}
+            >
+              {leaveSuccessModal && (
+                <>
+                  <img
+                    src={successCheck}
+                    className="img-fluid mb-4"
+                    alt="successCheck"
+                  />
+                  <p className="mb-4 text-center">
+                    Your Leave Request Submitted Successfully
+                  </p>
+                </>
+              )}
 
-    {showErrorModal && (
-      <p className="mb-4 text-center text-danger fw-bold">{errorMessage}</p>
-    )}
+              {showErrorModal && (
+                <p className="mb-4 text-center text-danger fw-bold">{errorMessage}</p>
+              )}
 
-    <button
-      className="btn w-100 text-white"
-      onClick={() => {
-        setLeaveSuccessModal(false);
-        setShowErrorModal(false);
-        if (leaveSuccessModal) navigate("/employee");
-      }}
-      style={{
-        backgroundColor: leaveSuccessModal ? "#5EAC24" : "#dc3545",
-      }}
-    >
-      Close
-    </button>
-  </div>
-</Modal>
+              <button
+                className="btn w-100 text-white"
+                onClick={() => {
+                  setLeaveSuccessModal(false);
+                  setShowErrorModal(false);
+                  if (leaveSuccessModal) navigate("/employee");
+                }}
+                style={{
+                  backgroundColor: leaveSuccessModal ? "#5EAC24" : "#dc3545",
+                }}
+              >
+                Close
+              </button>
+            </div>
+          </Modal>
 
 
 
@@ -322,5 +344,5 @@ export function EmployeeLeaveRequest() {
       </div>
     </>
   );
-  
+
 }
