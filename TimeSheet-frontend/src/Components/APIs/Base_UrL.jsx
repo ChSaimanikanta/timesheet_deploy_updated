@@ -1,6 +1,6 @@
-export const serverUrl = "http://203.223.190.17:4555/api";
+export const serverUrl = "https://timesheet.chiselontechnologies.com/api";
 
-// const ssuperadmin=`${serverUrl}:8089`
+//const ssuperadmin=`${serverUrl}:8089`
 // export const superadmin = `${serverUrl}:8089`;
 // export const supervisorurl = `${serverUrl}:8086`;
 // export const adminUrl = `${serverUrl}:8081`;
@@ -9,4 +9,3 @@ export const serverUrl = "http://203.223.190.17:4555/api";
 // export const employeeWorkingHours_Url = `${serverUrl}:8090`;
 // export const leaveRequest_Url = `${serverUrl}:8087`;
 // export const login_Url = `${serverUrl}:8088`;
-
