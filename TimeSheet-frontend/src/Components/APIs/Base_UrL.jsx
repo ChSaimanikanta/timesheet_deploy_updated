@@ -1,6 +1,6 @@
-export const serverUrl = "https://timesheet.chiselontechnologies.com/api";
+export const serverUrl = "http://203.223.190.17:4555/api";
 
-//const ssuperadmin=`${serverUrl}:8089`
+// const ssuperadmin=`${serverUrl}:8089`
 // export const superadmin = `${serverUrl}:8089`;
 // export const supervisorurl = `${serverUrl}:8086`;
 // export const adminUrl = `${serverUrl}:8081`;
